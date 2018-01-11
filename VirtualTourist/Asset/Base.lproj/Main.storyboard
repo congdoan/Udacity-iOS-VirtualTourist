@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="e6t-2W-hfr">
+    <device id="retina5_5" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Navigation Controller-->
+        <scene sceneID="WR9-EX-pdK">
+            <objects>
+                <navigationController id="e6t-2W-hfr" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="8fo-RV-1Z4">
+                        <rect key="frame" x="0.0" y="20" width="414" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="4mY-1e-Fog" kind="relationship" relationship="rootViewController" id="Uit-ro-bpw"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="RlK-g8-s7j" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-364" y="241"/>
+        </scene>
+        <!--Virtual Tourist-->
+        <scene sceneID="wsU-YC-3Jz">
+            <objects>
+                <viewController id="4mY-1e-Fog" customClass="TravelLocationsMapVC" customModule="VirtualTourist" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="dup-Xf-JdO">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="Zs1-4c-7rX">
+                                <rect key="frame" x="0.0" y="64" width="414" height="672"/>
+                                <connections>
+                                    <outlet property="delegate" destination="4mY-1e-Fog" id="lbI-53-e2E"/>
+                                </connections>
+                            </mapView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="Zs1-4c-7rX" firstAttribute="top" secondItem="xBh-Ot-A9c" secondAttribute="top" id="39f-T7-51C"/>
+                            <constraint firstItem="Zs1-4c-7rX" firstAttribute="trailing" secondItem="xBh-Ot-A9c" secondAttribute="trailing" id="AH1-Gd-dJg"/>
+                            <constraint firstItem="Zs1-4c-7rX" firstAttribute="leading" secondItem="xBh-Ot-A9c" secondAttribute="leading" id="CxD-ah-PkJ"/>
+                            <constraint firstItem="Zs1-4c-7rX" firstAttribute="bottom" secondItem="xBh-Ot-A9c" secondAttribute="bottom" id="bmB-rB-CMD"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="xBh-Ot-A9c"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Virtual Tourist" id="f9N-sA-2pM"/>
+                    <connections>
+                        <outlet property="mapView" destination="Zs1-4c-7rX" id="ahT-SN-vO7"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="zGu-K1-eTn" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="492.75362318840581" y="239.67391304347828"/>
+        </scene>
+    </scenes>
+</document>

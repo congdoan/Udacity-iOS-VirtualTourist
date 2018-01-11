@@ -8,20 +8,20 @@
 
 /* Begin PBXBuildFile section */
 		F48CE0792006F22800B6F135 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48CE0782006F22800B6F135 /* AppDelegate.swift */; };
-		F48CE07B2006F22800B6F135 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48CE07A2006F22800B6F135 /* ViewController.swift */; };
 		F48CE07E2006F22800B6F135 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F48CE07C2006F22800B6F135 /* Main.storyboard */; };
 		F48CE0802006F22800B6F135 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F48CE07F2006F22800B6F135 /* Assets.xcassets */; };
 		F48CE0832006F22900B6F135 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F48CE0812006F22900B6F135 /* LaunchScreen.storyboard */; };
+		F4BB97F0200703C500499778 /* TravelLocationsMapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		F48CE0752006F22800B6F135 /* VirtualTourist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualTourist.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F48CE0782006F22800B6F135 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		F48CE07A2006F22800B6F135 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		F48CE07D2006F22800B6F135 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		F48CE07F2006F22800B6F135 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F48CE0822006F22900B6F135 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F48CE0842006F22900B6F135 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelLocationsMapVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,13 +55,37 @@
 			isa = PBXGroup;
 			children = (
 				F48CE0782006F22800B6F135 /* AppDelegate.swift */,
-				F48CE07A2006F22800B6F135 /* ViewController.swift */,
-				F48CE07C2006F22800B6F135 /* Main.storyboard */,
-				F48CE07F2006F22800B6F135 /* Assets.xcassets */,
-				F48CE0812006F22900B6F135 /* LaunchScreen.storyboard */,
+				F4BB97EC2007033600499778 /* ViewController */,
+				F4BB97ED2007035E00499778 /* Model */,
+				F4BB97EE2007037D00499778 /* Asset */,
 				F48CE0842006F22900B6F135 /* Info.plist */,
 			);
 			path = VirtualTourist;
+			sourceTree = "<group>";
+		};
+		F4BB97EC2007033600499778 /* ViewController */ = {
+			isa = PBXGroup;
+			children = (
+				F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */,
+			);
+			path = ViewController;
+			sourceTree = "<group>";
+		};
+		F4BB97ED2007035E00499778 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		F4BB97EE2007037D00499778 /* Asset */ = {
+			isa = PBXGroup;
+			children = (
+				F48CE07C2006F22800B6F135 /* Main.storyboard */,
+				F48CE07F2006F22800B6F135 /* Assets.xcassets */,
+				F48CE0812006F22900B6F135 /* LaunchScreen.storyboard */,
+			);
+			path = Asset;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -136,7 +160,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F48CE07B2006F22800B6F135 /* ViewController.swift in Sources */,
+				F4BB97F0200703C500499778 /* TravelLocationsMapVC.swift in Sources */,
 				F48CE0792006F22800B6F135 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
