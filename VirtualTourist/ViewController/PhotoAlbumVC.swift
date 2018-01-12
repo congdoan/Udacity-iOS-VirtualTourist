@@ -23,27 +23,17 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func populateImageView(_ portrait: Bool) {
-        let size = UIScreen.main.bounds
         print("++++++")
-        print("UIScreen size: \(size.width), \(size.height)")
-        print("imageView.bounds: \(imageView.bounds.width), \(imageView.bounds.height)")
-        print("albumView.bounds: \(albumView.bounds.width), \(albumView.bounds.height)")
+        print("imageView.bounds.size: \(imageView.bounds.size)")
+        print("albumView.bounds.size: \(albumView.bounds.size)")
 
         /* Capture a portion around the pin */
         let options = MKMapSnapshotOptions()
         let coordinate = pinView.annotation!.coordinate
-        //let longitudeDistance: CLLocationDistance = 3500
-        //let width = CLLocationDistance(imageView.bounds.width), height = CLLocationDistance(imageView.bounds.height)
-        //let latitudeDistance: CLLocationDistance = (longitudeDistance * width) / height
-        //print("latitudeDistance/longitudeDistance: \(latitudeDistance)/\(longitudeDistance)")
-        //let region = MKCoordinateRegionMakeWithDistance(coordinate, latitudeDistance, longitudeDistance)
         let distanceInMeters: CLLocationDistance = portrait ? 6000 : 10000
         let region = MKCoordinateRegionMakeWithDistance(coordinate, distanceInMeters, distanceInMeters)
         options.region = region
-        //options.mapRect = mapRectForCoordinateRegion(region)
-        print("options.mapRect.size: \(options.mapRect.size)")
         options.size = imageView.bounds.size
-        print("imageView.bounds.size: \(imageView.bounds.size)")
         let snapshotter = MKMapSnapshotter(options: options)
         snapshotter.start { (snapshot, error) in
             guard let snapshot = snapshot, error == nil else {
@@ -51,11 +41,31 @@ class PhotoAlbumVC: UIViewController {
                 return
             }
             
-            print("snapshot.image.size: \(snapshot.image.size)")
+            print("snapshot.image.size  : \(snapshot.image.size)")
             print("------")
+            
+            
+            UIGraphicsBeginImageContext(options.size)
+            
+            snapshot.image.draw(at: .zero)
+            
+            var point = snapshot.point(for: coordinate)
+            let pinSize = self.pinView.bounds.size
+            point.x -= pinSize.width / 2
+            point.y -= pinSize.height / 2
+            let pinCenterOffset = self.pinView.centerOffset
+            point.x += pinCenterOffset.x
+            point.y += pinCenterOffset.y
+            let pinImage = self.pinView.image!
+            pinImage.draw(at: point)
+            
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            
+            UIGraphicsEndImageContext()
 
+            
             DispatchQueue.main.async {
-                self.imageView.image = snapshot.image
+                self.imageView.image = image
             }
         }
     }
