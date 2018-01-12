@@ -19,11 +19,12 @@ class PhotoAlbumVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        populateImageView(UIScreen.main.bounds.width < UIScreen.main.bounds.height)
+        populateImageView(UIScreen.main.bounds.width < UIScreen.main.bounds.height, UIScreen.main.bounds.width)
     }
     
-    private func populateImageView(_ portrait: Bool) {
+    private func populateImageView(_ portrait: Bool, _ width: CGFloat) {
         print("++++++")
+        print("UIScreen.main.bounds.size: \(UIScreen.main.bounds.size)")
         print("imageView.bounds.size: \(imageView.bounds.size)")
         print("albumView.bounds.size: \(albumView.bounds.size)")
 
@@ -33,7 +34,7 @@ class PhotoAlbumVC: UIViewController {
         let distanceInMeters: CLLocationDistance = portrait ? 6000 : 10000
         let region = MKCoordinateRegionMakeWithDistance(coordinate, distanceInMeters, distanceInMeters)
         options.region = region
-        options.size = imageView.bounds.size
+        options.size = CGSize(width: width, height: imageView.bounds.height)
         let snapshotter = MKMapSnapshotter(options: options)
         snapshotter.start { (snapshot, error) in
             guard let snapshot = snapshot, error == nil else {
@@ -70,29 +71,14 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
-    func mapRectForCoordinateRegion(_ region:MKCoordinateRegion) -> MKMapRect {
-        let topLeft = CLLocationCoordinate2D(latitude: region.center.latitude + (region.span.latitudeDelta/2),
-                                             longitude: region.center.longitude - (region.span.longitudeDelta/2))
-        let bottomRight = CLLocationCoordinate2D(latitude: region.center.latitude - (region.span.latitudeDelta/2),
-                                                 longitude: region.center.longitude + (region.span.longitudeDelta/2))
-        
-        let a = MKMapPointForCoordinate(topLeft)
-        let b = MKMapPointForCoordinate(bottomRight)
-        
-        return MKMapRect(origin: MKMapPoint(x:min(a.x,b.x), y:min(a.y,b.y)),
-                         size: MKMapSize(width: abs(a.x-b.x), height: abs(a.y-b.y)))
-    }
-    
-    override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        populateImageView(fromInterfaceOrientation.isLandscape)
-    }
+//    override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
+//        populateImageView(fromInterfaceOrientation.isLandscape)
+//    }
 
-    /*
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        print("Size: \(size)")
-        populateImageView(size.width < size.height)
+        
+        populateImageView(size.width < size.height, size.width)
     }
-    */
 
 }
