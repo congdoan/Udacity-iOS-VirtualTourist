@@ -19,22 +19,17 @@ class PhotoAlbumVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        populateImageView(UIScreen.main.bounds.width < UIScreen.main.bounds.height, UIScreen.main.bounds.width)
+        let screenBound = UIScreen.main.bounds
+        populateImageView(isPortrait: screenBound.width < screenBound.height, screenwidth: screenBound.width)
     }
     
-    private func populateImageView(_ portrait: Bool, _ width: CGFloat) {
-        print("++++++")
-        print("UIScreen.main.bounds.size: \(UIScreen.main.bounds.size)")
-        print("imageView.bounds.size: \(imageView.bounds.size)")
-        print("albumView.bounds.size: \(albumView.bounds.size)")
-
-        /* Capture a portion around the pin */
+    private func populateImageView(isPortrait: Bool, screenwidth: CGFloat) {
         let options = MKMapSnapshotOptions()
-        let coordinate = pinView.annotation!.coordinate
-        let distanceInMeters: CLLocationDistance = portrait ? 6000 : 10000
-        let region = MKCoordinateRegionMakeWithDistance(coordinate, distanceInMeters, distanceInMeters)
-        options.region = region
-        options.size = CGSize(width: width, height: imageView.bounds.height)
+        let pinCoordinate = pinView.annotation!.coordinate
+        let distanceInMeters: CLLocationDistance = isPortrait ? 6000 : 10000
+        let pinCenteredRegion = MKCoordinateRegionMakeWithDistance(pinCoordinate, distanceInMeters, distanceInMeters)
+        options.region = pinCenteredRegion
+        options.size = CGSize(width: screenwidth, height: imageView.bounds.height)
         let snapshotter = MKMapSnapshotter(options: options)
         snapshotter.start { (snapshot, error) in
             guard let snapshot = snapshot, error == nil else {
@@ -42,43 +37,32 @@ class PhotoAlbumVC: UIViewController {
                 return
             }
             
-            print("snapshot.image.size  : \(snapshot.image.size)")
-            print("------")
-            
-            
             UIGraphicsBeginImageContext(options.size)
+            snapshot.image.draw(at: .zero) // snapshot's image
             
-            snapshot.image.draw(at: .zero)
-            
-            var point = snapshot.point(for: coordinate)
+            /* Draw pin image at the center of the region */
+            var point = snapshot.point(for: pinCoordinate)
             let pinSize = self.pinView.bounds.size
             point.x -= pinSize.width / 2
             point.y -= pinSize.height / 2
             let pinCenterOffset = self.pinView.centerOffset
             point.x += pinCenterOffset.x
             point.y += pinCenterOffset.y
-            let pinImage = self.pinView.image!
-            pinImage.draw(at: point)
+            self.pinView.image!.draw(at: point) // pin image
             
-            let image = UIGraphicsGetImageFromCurrentImageContext()
-            
+            let imageOfSnapshotAndPin = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
-
             
             DispatchQueue.main.async {
-                self.imageView.image = image
+                self.imageView.image = imageOfSnapshotAndPin
             }
         }
     }
     
-//    override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-//        populateImageView(fromInterfaceOrientation.isLandscape)
-//    }
-
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         
-        populateImageView(size.width < size.height, size.width)
+        populateImageView(isPortrait: size.width < size.height, screenwidth: size.width)
     }
 
 }
