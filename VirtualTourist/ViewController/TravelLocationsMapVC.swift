@@ -9,6 +9,8 @@
 import UIKit
 import MapKit
 
+// MARK: - TravelLocationsMapVC: UIViewController
+
 class TravelLocationsMapVC: UIViewController {
 
     @IBOutlet weak var mapView: MKMapView!
@@ -16,12 +18,11 @@ class TravelLocationsMapVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let touchAndHoldGesture = UILongPressGestureRecognizer(target: self, action: #selector(getTouchCoordinateWithLongPressOnMap))
+        let touchAndHoldGesture = UILongPressGestureRecognizer(target: self, action: #selector(addPinAtLongPressPointOnMap))
         mapView.addGestureRecognizer(touchAndHoldGesture)
     }
     
-    //@IBAction func getTouchCoordinateWithLongPressOnMap(sender: UILongPressGestureRecognizer) {
-    @objc func getTouchCoordinateWithLongPressOnMap(sender: UILongPressGestureRecognizer) {
+    @objc func addPinAtLongPressPointOnMap(sender: UILongPressGestureRecognizer) {
         if sender.state != UIGestureRecognizerState.began {
             return
         }
@@ -34,7 +35,7 @@ class TravelLocationsMapVC: UIViewController {
 
 }
 
-// MARK: - MKMapViewDelegate
+// MARK: - TravelLocationsMapVC: MKMapViewDelegate
 
 extension TravelLocationsMapVC: MKMapViewDelegate {
     
@@ -45,6 +46,7 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
         if pinView == nil {
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
             pinView!.pinTintColor = .red
+            pinView!.animatesDrop = true
         } else {
             pinView!.annotation = annotation
         }
@@ -53,7 +55,9 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        print("\(view) TAPPED!")
+        let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
+        photoAlbumVC.pinView = view
+        navigationController!.pushViewController(photoAlbumVC, animated: true)
     }
     
 }

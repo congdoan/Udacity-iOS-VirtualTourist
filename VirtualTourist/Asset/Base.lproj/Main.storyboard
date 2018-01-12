@@ -50,14 +50,69 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="xBh-Ot-A9c"/>
                     </view>
-                    <navigationItem key="navigationItem" title="Virtual Tourist" id="f9N-sA-2pM"/>
+                    <navigationItem key="navigationItem" title="Virtual Tourist" id="f9N-sA-2pM">
+                        <barButtonItem key="backBarButtonItem" title="OK" id="ZY1-TI-W5d"/>
+                    </navigationItem>
                     <connections>
                         <outlet property="mapView" destination="Zs1-4c-7rX" id="ahT-SN-vO7"/>
+                        <segue destination="ddf-rH-uYN" kind="show" identifier="showPhotoAlbum" id="nRm-V1-e29"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zGu-K1-eTn" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="492.75362318840581" y="239.67391304347828"/>
+        </scene>
+        <!--Photo AlbumVC-->
+        <scene sceneID="Vem-P1-SPJ">
+            <objects>
+                <viewController storyboardIdentifier="PhotoAlbumVC" id="ddf-rH-uYN" customClass="PhotoAlbumVC" customModule="VirtualTourist" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="HWj-va-GhP">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="x3c-xb-pyz">
+                                <rect key="frame" x="0.0" y="64" width="414" height="150"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="150" id="Xgp-eD-l1m"/>
+                                </constraints>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="54E-xT-2Dh">
+                                <rect key="frame" x="0.0" y="692" width="414" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="vIl-0r-Kwj"/>
+                                </constraints>
+                                <state key="normal" title="New Collection"/>
+                            </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Photo Album" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vir-Y6-cSX">
+                                <rect key="frame" x="0.0" y="214" width="414" height="478"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="54E-xT-2Dh" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" id="8Bg-4c-det"/>
+                            <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="vir-Y6-cSX" secondAttribute="trailing" id="8GU-w6-uhM"/>
+                            <constraint firstItem="54E-xT-2Dh" firstAttribute="top" secondItem="vir-Y6-cSX" secondAttribute="bottom" id="8lQ-32-clk"/>
+                            <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="x3c-xb-pyz" secondAttribute="trailing" id="CDY-Cs-Gx6"/>
+                            <constraint firstItem="vir-Y6-cSX" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" id="GM2-GC-ZhU"/>
+                            <constraint firstItem="x3c-xb-pyz" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" id="JrY-zm-iM5"/>
+                            <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="54E-xT-2Dh" secondAttribute="trailing" id="MBx-Df-6t5"/>
+                            <constraint firstItem="x3c-xb-pyz" firstAttribute="top" secondItem="tTr-VO-HJQ" secondAttribute="top" id="OU1-51-Vzk"/>
+                            <constraint firstItem="vir-Y6-cSX" firstAttribute="top" secondItem="x3c-xb-pyz" secondAttribute="bottom" id="hSF-af-vXS"/>
+                            <constraint firstItem="tTr-VO-HJQ" firstAttribute="bottom" secondItem="54E-xT-2Dh" secondAttribute="bottom" id="xiK-lw-kos"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="tTr-VO-HJQ"/>
+                    </view>
+                    <connections>
+                        <outlet property="albumView" destination="vir-Y6-cSX" id="Pj1-yc-IWa"/>
+                        <outlet property="imageView" destination="x3c-xb-pyz" id="L94-qK-zTA"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Vm4-8Z-ur6" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1286" y="240"/>
         </scene>
     </scenes>
 </document>

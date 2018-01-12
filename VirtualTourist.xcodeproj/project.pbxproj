@@ -11,6 +11,7 @@
 		F48CE07E2006F22800B6F135 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F48CE07C2006F22800B6F135 /* Main.storyboard */; };
 		F48CE0802006F22800B6F135 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F48CE07F2006F22800B6F135 /* Assets.xcassets */; };
 		F48CE0832006F22900B6F135 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F48CE0812006F22900B6F135 /* LaunchScreen.storyboard */; };
+		F4988271200753ED006D59B5 /* PhotoAlbumVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4988270200753ED006D59B5 /* PhotoAlbumVC.swift */; };
 		F4BB97F0200703C500499778 /* TravelLocationsMapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */; };
 /* End PBXBuildFile section */
 
@@ -21,6 +22,7 @@
 		F48CE07F2006F22800B6F135 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F48CE0822006F22900B6F135 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F48CE0842006F22900B6F135 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F4988270200753ED006D59B5 /* PhotoAlbumVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAlbumVC.swift; sourceTree = "<group>"; };
 		F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelLocationsMapVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,6 +68,7 @@
 		F4BB97EC2007033600499778 /* ViewController */ = {
 			isa = PBXGroup;
 			children = (
+				F4988270200753ED006D59B5 /* PhotoAlbumVC.swift */,
 				F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */,
 			);
 			path = ViewController;
@@ -160,6 +163,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4988271200753ED006D59B5 /* PhotoAlbumVC.swift in Sources */,
 				F4BB97F0200703C500499778 /* TravelLocationsMapVC.swift in Sources */,
 				F48CE0792006F22800B6F135 /* AppDelegate.swift in Sources */,
 			);
