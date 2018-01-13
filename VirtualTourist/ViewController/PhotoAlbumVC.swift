@@ -40,20 +40,8 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
-    /*
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-        
-        isPortrait = !isPortrait
-        flowLayout.itemSize = isPortrait ? itemSizePortrait : itemSizeLandscape
-        flowLayout.invalidateLayout()
-        
-        populateImageView(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.height)
-    }
-    */
-    
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        super.didRotate(from: fromInterfaceOrientation)
+        //super.didRotate(from: fromInterfaceOrientation)
         
         setFlowLayoutProperties()
         flowLayout.invalidateLayout()
