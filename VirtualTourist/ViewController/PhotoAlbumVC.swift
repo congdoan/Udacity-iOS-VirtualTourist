@@ -13,9 +13,6 @@ class PhotoAlbumVC: UIViewController {
     
     var pinView: MKAnnotationView!
     var imageUrls = [String]()
-    var itemSizePortrait: CGSize!
-    var itemSizeLandscape: CGSize!
-    var isPortrait: Bool!
 
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
@@ -27,7 +24,7 @@ class PhotoAlbumVC: UIViewController {
         
         setFlowLayoutProperties()
 
-        populateImageView(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width)
+        populateImageView()
         
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate) { (imageUrls, error) in
@@ -58,21 +55,21 @@ class PhotoAlbumVC: UIViewController {
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         super.didRotate(from: fromInterfaceOrientation)
         
-        isPortrait = !isPortrait
-        flowLayout.itemSize = isPortrait ? itemSizePortrait : itemSizeLandscape
+        setFlowLayoutProperties()
         flowLayout.invalidateLayout()
         
-        populateImageView(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width)
+        populateImageView()
     }
 
-    private func populateImageView(safeAreaWidth: CGFloat) {
+    private func populateImageView() {
         imageViewSpinner.startAnimating()
         
         let options = MKMapSnapshotOptions()
         let pinCoordinate = pinView.annotation!.coordinate
-        let distanceInMeters: CLLocationDistance = isPortrait ? 6000 : 10000
+        let distanceInMeters: CLLocationDistance = UIDevice.current.orientation.isPortrait ? 6000 : 10000
         let pinCenteredRegion = MKCoordinateRegionMakeWithDistance(pinCoordinate, distanceInMeters, distanceInMeters)
         options.region = pinCenteredRegion
+        let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width
         options.size = CGSize(width: safeAreaWidth, height: imageView.bounds.height)
         let snapshotter = MKMapSnapshotter(options: options)
         snapshotter.start { (snapshot, error) in
@@ -111,28 +108,13 @@ class PhotoAlbumVC: UIViewController {
     // MARK: Set the Collection View Flow Layout's Properties
     
     private func setFlowLayoutProperties() {
-        print("+++setFlowLayoutProperties+++")
-        isPortrait = UIDevice.current.orientation.isPortrait
-        //let safeAreaFrame = UIApplication.shared.keyWindow!.frame
-        let safeAreaFrame = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame
-        let safeAreaWidth = safeAreaFrame.width, safeAreaHeight = safeAreaFrame.height
-        let safeAreaMinDimen = min(safeAreaWidth, safeAreaHeight), safeAreaMaxDimen = max(safeAreaWidth, safeAreaHeight)
-        let numItemsInRowPortrait: CGFloat = 3, numItemsInRowLandscape: CGFloat = 5
+        let numItemsInRow: CGFloat = UIDevice.current.orientation.isPortrait ? 3 : 5
         let spacing: CGFloat = 3.0
-        let dimensionPortrait = (safeAreaMinDimen - (numItemsInRowPortrait *  spacing) + spacing) / numItemsInRowPortrait
-        let dimensionLandscape = (safeAreaMaxDimen - (numItemsInRowLandscape *  spacing) + spacing) / numItemsInRowLandscape - 2.4
+        let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width
+        let dimension = (safeAreaWidth - (numItemsInRow *  spacing) + spacing) / numItemsInRow
+        flowLayout.itemSize = CGSize(width: dimension, height: dimension)
         flowLayout.minimumInteritemSpacing = spacing
         flowLayout.minimumLineSpacing = spacing
-        itemSizePortrait = CGSize(width: dimensionPortrait, height: dimensionPortrait)
-        itemSizeLandscape = CGSize(width: dimensionLandscape, height: dimensionLandscape)
-        flowLayout.itemSize = isPortrait ? itemSizePortrait : itemSizeLandscape
-        print("setFlowLayoutProperties isPortrait       : \(isPortrait!)")
-        print("setFlowLayoutProperties totalAreaSize    : \(UIApplication.shared.keyWindow!.frame.size)")
-        print("setFlowLayoutProperties safeAreaSize     : \(safeAreaFrame.size)")
-        print("setFlowLayoutProperties safeAreaInsets   : \(UIApplication.shared.keyWindow!.safeAreaInsets)")
-        print("setFlowLayoutProperties itemSizePortrait : \(itemSizePortrait!)")
-        print("setFlowLayoutProperties itemSizeLandscape: \(itemSizeLandscape!)")
-        print("---setFlowLayoutProperties---")
     }
     
 }
