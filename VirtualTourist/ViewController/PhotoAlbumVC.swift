@@ -13,6 +13,9 @@ class PhotoAlbumVC: UIViewController {
     
     var pinView: MKAnnotationView!
     var imageUrls = [String]()
+    var itemSizePortrait: CGSize!
+    var itemSizeLandscape: CGSize!
+    var isPortrait: Bool!
 
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
@@ -21,13 +24,15 @@ class PhotoAlbumVC: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        setFlowLayoutProperties()
 
-        populateImageView(isPortrait: UIDevice.current.orientation.isPortrait, screenWidth: UIScreen.main.bounds.width)
+        populateImageView(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width)
         
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate) { (imageUrls, error) in
             if let imageUrls = imageUrls as? [String] {
-                self.imageUrls = imageUrls
+                self.imageUrls = Array(imageUrls.prefix(24))
                 DispatchQueue.main.async {
                     self.collectionView.reloadData()
                 }
@@ -36,11 +41,31 @@ class PhotoAlbumVC: UIViewController {
             
             //TODO display error
         }
-        
-        setFlowLayoutProperties(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width)
     }
     
-    private func populateImageView(isPortrait: Bool, screenWidth: CGFloat) {
+    /*
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        isPortrait = !isPortrait
+        flowLayout.itemSize = isPortrait ? itemSizePortrait : itemSizeLandscape
+        flowLayout.invalidateLayout()
+        
+        populateImageView(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.height)
+    }
+    */
+    
+    override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
+        super.didRotate(from: fromInterfaceOrientation)
+        
+        isPortrait = !isPortrait
+        flowLayout.itemSize = isPortrait ? itemSizePortrait : itemSizeLandscape
+        flowLayout.invalidateLayout()
+        
+        populateImageView(safeAreaWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width)
+    }
+
+    private func populateImageView(safeAreaWidth: CGFloat) {
         imageViewSpinner.startAnimating()
         
         let options = MKMapSnapshotOptions()
@@ -48,7 +73,7 @@ class PhotoAlbumVC: UIViewController {
         let distanceInMeters: CLLocationDistance = isPortrait ? 6000 : 10000
         let pinCenteredRegion = MKCoordinateRegionMakeWithDistance(pinCoordinate, distanceInMeters, distanceInMeters)
         options.region = pinCenteredRegion
-        options.size = CGSize(width: screenWidth, height: imageView.bounds.height)
+        options.size = CGSize(width: safeAreaWidth, height: imageView.bounds.height)
         let snapshotter = MKMapSnapshotter(options: options)
         snapshotter.start { (snapshot, error) in
             guard let snapshot = snapshot, error == nil else {
@@ -83,27 +108,30 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-        
-        print("viewWillTransition UIDevice.isPortrait: \(UIDevice.current.orientation.isPortrait)")
-        populateImageView(isPortrait: size.width < size.height,
-                          screenWidth: UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.height)
-    }
-    
     // MARK: Set the Collection View Flow Layout's Properties
     
-    private func setFlowLayoutProperties(safeAreaWidth: CGFloat) {
+    private func setFlowLayoutProperties() {
         print("+++setFlowLayoutProperties+++")
-        print("setFlowLayoutProperties safeAreaWidth: \(safeAreaWidth)")
-        let spacing: CGFloat = 3
-        let numberOfItemsInRow: CGFloat = UIDevice.current.orientation.isPortrait ? 3 : 5
-        let numberOfSpacingsInRow: CGFloat = numberOfItemsInRow - 1
-        let dimension = ((safeAreaWidth - (numberOfSpacingsInRow *  spacing)) / numberOfItemsInRow)
+        isPortrait = UIDevice.current.orientation.isPortrait
+        //let safeAreaFrame = UIApplication.shared.keyWindow!.frame
+        let safeAreaFrame = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame
+        let safeAreaWidth = safeAreaFrame.width, safeAreaHeight = safeAreaFrame.height
+        let safeAreaMinDimen = min(safeAreaWidth, safeAreaHeight), safeAreaMaxDimen = max(safeAreaWidth, safeAreaHeight)
+        let numItemsInRowPortrait: CGFloat = 3, numItemsInRowLandscape: CGFloat = 5
+        let spacing: CGFloat = 3.0
+        let dimensionPortrait = (safeAreaMinDimen - (numItemsInRowPortrait *  spacing) + spacing) / numItemsInRowPortrait
+        let dimensionLandscape = (safeAreaMaxDimen - (numItemsInRowLandscape *  spacing) + spacing) / numItemsInRowLandscape - 2.4
         flowLayout.minimumInteritemSpacing = spacing
         flowLayout.minimumLineSpacing = spacing
-        flowLayout.itemSize = CGSize(width: dimension, height: dimension)
-        print("setFlowLayoutProperties flowLayout.itemSize: \(flowLayout.itemSize)")
+        itemSizePortrait = CGSize(width: dimensionPortrait, height: dimensionPortrait)
+        itemSizeLandscape = CGSize(width: dimensionLandscape, height: dimensionLandscape)
+        flowLayout.itemSize = isPortrait ? itemSizePortrait : itemSizeLandscape
+        print("setFlowLayoutProperties isPortrait       : \(isPortrait!)")
+        print("setFlowLayoutProperties totalAreaSize    : \(UIApplication.shared.keyWindow!.frame.size)")
+        print("setFlowLayoutProperties safeAreaSize     : \(safeAreaFrame.size)")
+        print("setFlowLayoutProperties safeAreaInsets   : \(UIApplication.shared.keyWindow!.safeAreaInsets)")
+        print("setFlowLayoutProperties itemSizePortrait : \(itemSizePortrait!)")
+        print("setFlowLayoutProperties itemSizeLandscape: \(itemSizeLandscape!)")
         print("---setFlowLayoutProperties---")
     }
     
@@ -136,6 +164,10 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
                 }
             }
         }
+    }
+    
+    private func iPhoneX() -> Bool {
+        return UIDevice.current.userInterfaceIdiom == .phone && UIScreen.main.nativeBounds.height == 2436
     }
     
 }
