@@ -125,10 +125,15 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
     
     private func fetchImageFromUrlForCell(_ url: URL, _ cell: PhotoAlbumCell) {
         cell.spinner.startAnimating()
+        cell.alpha = 0.5
+        cell.imageView.image = nil
+        cell.layer.cornerRadius = 10
         DispatchQueue.global(qos: .userInteractive).async {
             let data = try? Data(contentsOf: url)
             DispatchQueue.main.async {
                 cell.spinner.stopAnimating()
+                cell.alpha = 1.0
+                cell.layer.cornerRadius = 0
                 if let data = data {
                     cell.imageView.image = UIImage(data: data)
                 }
