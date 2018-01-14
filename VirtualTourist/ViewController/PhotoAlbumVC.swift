@@ -18,14 +18,13 @@ class PhotoAlbumVC: UIViewController {
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
     @IBOutlet weak var imageViewHeight: NSLayoutConstraint!
     @IBOutlet weak var collectionView: UICollectionView!
+    @IBOutlet weak var newCollectionButtonHeight: NSLayoutConstraint!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setFlowLayoutProperties()
-
-        populateImageView()
+        configureUIBasedOnOrientation()
         
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate) { (imageUrls, error) in
@@ -44,24 +43,32 @@ class PhotoAlbumVC: UIViewController {
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         //super.didRotate(from: fromInterfaceOrientation)
         
-        if fromInterfaceOrientation.isPortrait {
-            imageViewHeight.constant = 110
-        } else {
-            imageViewHeight.constant = 150
-        }
-        
-        setFlowLayoutProperties()
-        flowLayout.invalidateLayout()
-        
-        populateImageView()
+        configureUIBasedOnOrientation()
     }
-
-    private func populateImageView() {
+    
+    private func configureUIBasedOnOrientation() {
+        let isPortrait = UIDevice.current.orientation.isPortrait
+        setViewHeightsBasedOnOrientation(isPortrait)
+        populateImageViewBasedOnOrientation(isPortrait)
+        setFlowLayoutPropertiesBasedOnOrientation(isPortrait)
+    }
+    
+    private func setViewHeightsBasedOnOrientation(_ isPortrait: Bool) {
+        if isPortrait {
+            imageViewHeight.constant = 150
+            newCollectionButtonHeight.constant = 44
+        } else {
+            imageViewHeight.constant = 100
+            newCollectionButtonHeight.constant = 38
+        }
+    }
+    
+    private func populateImageViewBasedOnOrientation(_ isPortrait: Bool) {
         imageViewSpinner.startAnimating()
         
         let options = MKMapSnapshotOptions()
         let pinCoordinate = pinView.annotation!.coordinate
-        let distanceInMeters: CLLocationDistance = UIDevice.current.orientation.isPortrait ? 6000 : 10000
+        let distanceInMeters: CLLocationDistance = isPortrait ? 6000 : 10000
         let pinCenteredRegion = MKCoordinateRegionMakeWithDistance(pinCoordinate, distanceInMeters, distanceInMeters)
         options.region = pinCenteredRegion
         let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width
@@ -100,10 +107,10 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
-    // MARK: Set the Collection View Flow Layout's Properties
-    
-    private func setFlowLayoutProperties() {
-        let numItemsInRow: CGFloat = UIDevice.current.orientation.isPortrait ? 3 : 5
+    private func setFlowLayoutPropertiesBasedOnOrientation(_ isPortrait: Bool) {
+        let numItemsInRow: CGFloat = isPortrait ? 3 : 4
+        print("setFlowLayoutPropertiesBasedOnOrientation isPortrait   : \(isPortrait)")
+        print("setFlowLayoutPropertiesBasedOnOrientation numItemsInRow: \(numItemsInRow)")
         let spacing: CGFloat = 3.0
         let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width - 2.0 //since margin of colection view is 1 for each side
         let dimension = (safeAreaWidth - (numItemsInRow *  spacing) + spacing) / numItemsInRow
