@@ -105,7 +105,7 @@ class PhotoAlbumVC: UIViewController {
     private func setFlowLayoutProperties() {
         let numItemsInRow: CGFloat = UIDevice.current.orientation.isPortrait ? 3 : 5
         let spacing: CGFloat = 3.0
-        let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width
+        let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width - 2.0 //since margin of colection view is 1 for each side
         let dimension = (safeAreaWidth - (numItemsInRow *  spacing) + spacing) / numItemsInRow
         flowLayout.itemSize = CGSize(width: dimension, height: dimension)
         flowLayout.minimumInteritemSpacing = spacing
