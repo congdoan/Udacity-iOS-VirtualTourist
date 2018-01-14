@@ -152,6 +152,7 @@
                         <outlet property="collectionView" destination="kMF-S8-g0d" id="qkS-6z-gWR"/>
                         <outlet property="flowLayout" destination="akG-qK-Es8" id="gw2-Kh-nel"/>
                         <outlet property="imageView" destination="x3c-xb-pyz" id="L94-qK-zTA"/>
+                        <outlet property="imageViewHeight" destination="Xgp-eD-l1m" id="C0H-R1-0fw"/>
                         <outlet property="imageViewSpinner" destination="b2o-F4-zpY" id="Yyw-8n-Yj9"/>
                     </connections>
                 </viewController>

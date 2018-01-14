@@ -16,9 +16,10 @@ class PhotoAlbumVC: UIViewController {
 
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
+    @IBOutlet weak var imageViewHeight: NSLayoutConstraint!
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -42,6 +43,12 @@ class PhotoAlbumVC: UIViewController {
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         //super.didRotate(from: fromInterfaceOrientation)
+        
+        if fromInterfaceOrientation.isPortrait {
+            imageViewHeight.constant = 110
+        } else {
+            imageViewHeight.constant = 150
+        }
         
         setFlowLayoutProperties()
         flowLayout.invalidateLayout()
@@ -139,10 +146,6 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
                 }
             }
         }
-    }
-    
-    private func iPhoneX() -> Bool {
-        return UIDevice.current.userInterfaceIdiom == .phone && UIScreen.main.nativeBounds.height == 2436
     }
     
 }
