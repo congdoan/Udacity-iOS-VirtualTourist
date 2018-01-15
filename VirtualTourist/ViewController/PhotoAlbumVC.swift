@@ -17,12 +17,16 @@ class PhotoAlbumVC: UIViewController {
     let albumSize = 24, pageSize = 4 * 24
     var albumNumberInPage = 1, pageNumber = 1
     var totalOfPages: Int!
+    var selectedItems: [Bool]!
+    var fetchedImages: [UIImage?]!
+    var selectedItemCount = 0
 
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
     @IBOutlet weak var imageViewHeight: NSLayoutConstraint!
     @IBOutlet weak var collectionView: UICollectionView!
-    @IBOutlet weak var newCollectionButtonHeight: NSLayoutConstraint!
+    @IBOutlet weak var button: UIButton!
+    @IBOutlet weak var buttonHeightConstraint: NSLayoutConstraint!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     
     override func viewDidLoad() {
@@ -39,6 +43,8 @@ class PhotoAlbumVC: UIViewController {
                 let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, imageUrlsFetched.count)
                 print("from/to/imageUrlsFetched.count: \(from)/\(to)/\(imageUrlsFetched.count)")
                 self.imageUrls = Array(imageUrlsFetched[from..<to])
+                self.selectedItems = Array(repeating: false, count: to - from)
+                self.fetchedImages = Array(repeating: nil, count: to - from)
                 DispatchQueue.main.async {
                     self.collectionView.reloadData()
                 }
@@ -55,14 +61,17 @@ class PhotoAlbumVC: UIViewController {
         configureUIBasedOnOrientation()
     }
     
-    @IBAction func nextAlbumOfPhotos(_ sender: Any) {
+    @IBAction func buttonPressed(_ sender: Any) {
+        if selectedItemCount == 0 {
+            displayNextAlbumOfPhotos()
+        } else {
+            removeSelectedPhotos()
+        }
+    }
+    
+    private func displayNextAlbumOfPhotos() {
         if albumNumberInPage * albumSize >= imageUrlsFetched.count && pageNumber >= totalOfPages {
-            let alert = UIAlertController(title: nil, message: "There is No more images.", preferredStyle: .alert)
-            let action = UIAlertAction(title: "OK", style: .default) { (_) in
-                alert.dismiss(animated: true, completion: nil)
-            }
-            alert.addAction(action)
-            present(alert, animated: true, completion: nil)
+            showAlert()
             return
         }
         
@@ -70,6 +79,8 @@ class PhotoAlbumVC: UIViewController {
         let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, imageUrlsFetched.count)
         print("from/to/imageUrlsFetched.count: \(from)/\(to)/\(imageUrlsFetched.count)")
         imageUrls = Array(imageUrlsFetched[from..<to])
+        selectedItems = Array(repeating: false, count: to - from)
+        fetchedImages = Array(repeating: nil, count: to - from)
         collectionView.reloadData()
         
         /* Pre-fetch next page */
@@ -90,6 +101,29 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
+    private func removeSelectedPhotos() {
+        var newImageUrls = [String]()
+        for i in 0..<selectedItems.count {
+            if !selectedItems[i] {
+                newImageUrls.append(imageUrls[i])
+            }
+        }
+        imageUrls = newImageUrls
+        collectionView.reloadData()
+        selectedItems = Array(repeating: false, count: imageUrls.count)
+        selectedItemCount = 0
+        button.setTitle("New Collection", for: .normal)
+    }
+    
+    private func showAlert() {
+        let alert = UIAlertController(title: nil, message: "There is No more images.", preferredStyle: .alert)
+        let action = UIAlertAction(title: "OK", style: .default) { (_) in
+            alert.dismiss(animated: true, completion: nil)
+        }
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
+    
     private func configureUIBasedOnOrientation() {
         let isPortrait = UIDevice.current.orientation.isPortrait
         setViewHeightsBasedOnOrientation(isPortrait)
@@ -100,10 +134,10 @@ class PhotoAlbumVC: UIViewController {
     private func setViewHeightsBasedOnOrientation(_ isPortrait: Bool) {
         if isPortrait {
             imageViewHeight.constant = 150
-            newCollectionButtonHeight.constant = 44
+            buttonHeightConstraint.constant = 44
         } else {
             imageViewHeight.constant = 100
-            newCollectionButtonHeight.constant = 38
+            buttonHeightConstraint.constant = 38
         }
     }
     
@@ -172,29 +206,53 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCell", for: indexPath) as! PhotoAlbumCell
         
-        // Configure the cell
-        let url = URL(string: imageUrls[indexPath.row])!
-        fetchImageFromUrlForCell(url, cell)
-        
-        return cell
-    }
-    
-    private func fetchImageFromUrlForCell(_ url: URL, _ cell: PhotoAlbumCell) {
-        cell.spinner.startAnimating()
-        cell.alpha = 0.5
-        cell.imageView.image = nil
-        cell.layer.cornerRadius = 10
-        DispatchQueue.global(qos: .userInteractive).async {
-            let data = try? Data(contentsOf: url)
-            DispatchQueue.main.async {
-                cell.spinner.stopAnimating()
-                cell.alpha = 1.0
-                cell.layer.cornerRadius = 0
+        if let image = fetchedImages[indexPath.item] {
+            cell.imageView.image = image
+            cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
+        } else {
+            /* Fetch the image & Populate the cell */
+            let url = URL(string: imageUrls[indexPath.item])!
+            cell.spinner.startAnimating()
+            cell.alpha = selectedItems[indexPath.item] ? 0.3 : 0.5
+            cell.imageView.image = nil
+            cell.layer.cornerRadius = 10
+            DispatchQueue.global(qos: .userInteractive).async {
+                let data = try? Data(contentsOf: url)
                 if let data = data {
-                    cell.imageView.image = UIImage(data: data)
+                    self.fetchedImages[indexPath.item] = UIImage(data: data)
+                }
+                DispatchQueue.main.async {
+                    cell.spinner.stopAnimating()
+                    cell.alpha = self.selectedItems[indexPath.item] ? 0.3 : 1.0
+                    cell.layer.cornerRadius = 0
+                    if let image = self.fetchedImages[indexPath.item] {
+                        cell.imageView.image = image
+                    }
                 }
             }
         }
+
+        return cell
     }
     
 }
+
+extension PhotoAlbumVC: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard fetchedImages[indexPath.item] != nil else {
+            return
+        }
+        selectedItems[indexPath.item] = !selectedItems[indexPath.item]
+        if selectedItems[indexPath.item] {
+            collectionView.cellForItem(at: indexPath)!.alpha = 0.3
+            selectedItemCount += 1
+        } else {
+            collectionView.cellForItem(at: indexPath)!.alpha = 1.0
+            selectedItemCount -= 1
+        }
+        button.setTitle(selectedItemCount > 0 ? "Remove Selected Photos" : "New Collection", for: .normal)
+    }
+    
+}
+

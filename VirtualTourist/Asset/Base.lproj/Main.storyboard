@@ -86,7 +86,7 @@
                                 </constraints>
                                 <state key="normal" title="New Collection"/>
                                 <connections>
-                                    <action selector="nextAlbumOfPhotos:" destination="ddf-rH-uYN" eventType="touchUpInside" id="sMb-nd-yUY"/>
+                                    <action selector="buttonPressed:" destination="ddf-rH-uYN" eventType="touchUpInside" id="sMb-nd-yUY"/>
                                 </connections>
                             </button>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="kMF-S8-g0d">
@@ -131,6 +131,7 @@
                                 </cells>
                                 <connections>
                                     <outlet property="dataSource" destination="ddf-rH-uYN" id="KZu-UY-Cvb"/>
+                                    <outlet property="delegate" destination="ddf-rH-uYN" id="6DA-Ii-zr8"/>
                                 </connections>
                             </collectionView>
                         </subviews>
@@ -152,12 +153,13 @@
                         <viewLayoutGuide key="safeArea" id="tTr-VO-HJQ"/>
                     </view>
                     <connections>
+                        <outlet property="button" destination="54E-xT-2Dh" id="2IE-EC-Lze"/>
+                        <outlet property="buttonHeightConstraint" destination="vIl-0r-Kwj" id="ZKs-c1-aIc"/>
                         <outlet property="collectionView" destination="kMF-S8-g0d" id="qkS-6z-gWR"/>
                         <outlet property="flowLayout" destination="akG-qK-Es8" id="gw2-Kh-nel"/>
                         <outlet property="imageView" destination="x3c-xb-pyz" id="L94-qK-zTA"/>
                         <outlet property="imageViewHeight" destination="Xgp-eD-l1m" id="C0H-R1-0fw"/>
                         <outlet property="imageViewSpinner" destination="b2o-F4-zpY" id="Yyw-8n-Yj9"/>
-                        <outlet property="newCollectionButtonHeight" destination="vIl-0r-Kwj" id="ZKs-c1-aIc"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Vm4-8Z-ur6" userLabel="First Responder" sceneMemberID="firstResponder"/>

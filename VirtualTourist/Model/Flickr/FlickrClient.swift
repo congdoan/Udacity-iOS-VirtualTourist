@@ -121,17 +121,15 @@ class  FlickrClient {
             }
             
             /* Calculate the actual number of pages based total, max number of results per search, and perpage */
-            guard let perpage = photosDictionary[Constants.FlickrResponseKeys.PerPage] as? Int,
-                  let total = photosDictionary[Constants.FlickrResponseKeys.Total] as? String else {
-                self.sendError("Cannot find keys 'perpage' and 'total' in \(photosDictionary)",
+            guard let total = photosDictionary[Constants.FlickrResponseKeys.Total] as? String else {
+                self.sendError("Cannot find keys 'total' in \(photosDictionary)",
                                 domain, completionHandler)
                 return
             }
-            print("perpage=\(perpage) photoArray.size=\(photoArray.count), total=\(total)")
+            print("photoArray.size=\(photoArray.count), total=\(total)")
             let maxNumberOfResultsPerSearch = 4100
             let actualNumberOfReturnedImages = min(Int(total)!, maxNumberOfResultsPerSearch)
-            let actualNumberOfPages = (actualNumberOfReturnedImages / perpage) + (actualNumberOfReturnedImages % perpage != 0 ? 1 : 0)
-            print("actualNumberOfReturnedImages: \(actualNumberOfReturnedImages)")
+            let actualNumberOfPages = (actualNumberOfReturnedImages / pageSize) + (actualNumberOfReturnedImages % pageSize != 0 ? 1 : 0)
             print("actualNumberOfPages         : \(actualNumberOfPages)")
 
             let imageUrls = photoArray.map {(photoDictionary) in
