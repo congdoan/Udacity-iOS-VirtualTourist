@@ -1,9 +1,9 @@
 //
 //  Constants.swift
-//  FlickFinder
+//  VirtualTourist
 //
-//  Created by Jarrod Parkes on 11/5/15.
-//  Copyright © 2015 Udacity. All rights reserved.
+//  Created by Cong Doan on 1/11/18.
+//  Copyright © 2018 Cong Doan. All rights reserved.
 //
 
 import UIKit
@@ -28,13 +28,12 @@ struct Constants {
     struct FlickrParameterKeys {
         static let Method = "method"
         static let APIKey = "api_key"
-        static let GalleryID = "gallery_id"
         static let Extras = "extras"
         static let Format = "format"
         static let NoJSONCallback = "nojsoncallback"
         static let SafeSearch = "safe_search"
-        static let Text = "text"
         static let BoundingBox = "bbox"
+        static let PerPage = "per_page"
         static let Page = "page"
     }
     
@@ -44,8 +43,6 @@ struct Constants {
         static let APIKey = "e1d09876af59f6c14d081747b5d15c3d" // same api_key of 'Sleeping in the Library' app
         static let ResponseFormat = "json"
         static let DisableJSONCallback = "1" /* 1 means "yes" */
-        static let GalleryPhotosMethod = "flickr.galleries.getPhotos"
-        static let GalleryID = "5704-72157622566655097"
         static let MediumURL = "url_m"
         static let UseSafeSearch = "1"
     }
@@ -55,9 +52,9 @@ struct Constants {
         static let Status = "stat"
         static let Photos = "photos"
         static let Photo = "photo"
-        static let Title = "title"
         static let MediumURL = "url_m"
         static let Pages = "pages"
+        static let PerPage = "perpage"
         static let Total = "total"
     }
     
@@ -66,14 +63,4 @@ struct Constants {
         static let OKStatus = "ok"
     }
     
-    // FIX: As of Swift 2.2, using strings for selectors has been deprecated. Instead, #selector(methodName) should be used.
-    /*
-     // MARK: Selectors
-     struct Selectors {
-     static let KeyboardWillShow: Selector = "keyboardWillShow:"
-     static let KeyboardWillHide: Selector = "keyboardWillHide:"
-     static let KeyboardDidShow: Selector = "keyboardDidShow:"
-     static let KeyboardDidHide: Selector = "keyboardDidHide:"
-     }
-     */
 }

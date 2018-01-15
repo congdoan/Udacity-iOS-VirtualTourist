@@ -13,6 +13,10 @@ class PhotoAlbumVC: UIViewController {
     
     var pinView: MKAnnotationView!
     var imageUrls = [String]()
+    var imageUrlsFetched: [String]!
+    let albumSize = 24, pageSize = 4 * 24
+    var albumNumberInPage = 1, pageNumber = 1
+    var totalOfPages: Int!
 
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
@@ -27,9 +31,14 @@ class PhotoAlbumVC: UIViewController {
         configureUIBasedOnOrientation()
         
         let pinCoordinate = pinView.annotation!.coordinate
-        FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate) { (imageUrls, error) in
-            if let imageUrls = imageUrls as? [String] {
-                self.imageUrls = Array(imageUrls.prefix(24))
+        FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
+            if let imageUrlsFetched = imageUrls as? [String] {
+                self.imageUrlsFetched = imageUrlsFetched
+                self.totalOfPages = totalOfPages
+                print("totalOfPages: \(totalOfPages!)")
+                let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, imageUrlsFetched.count)
+                print("from/to/imageUrlsFetched.count: \(from)/\(to)/\(imageUrlsFetched.count)")
+                self.imageUrls = Array(imageUrlsFetched[from..<to])
                 DispatchQueue.main.async {
                     self.collectionView.reloadData()
                 }
@@ -44,6 +53,41 @@ class PhotoAlbumVC: UIViewController {
         //super.didRotate(from: fromInterfaceOrientation)
         
         configureUIBasedOnOrientation()
+    }
+    
+    @IBAction func nextAlbumOfPhotos(_ sender: Any) {
+        if albumNumberInPage * albumSize >= imageUrlsFetched.count && pageNumber >= totalOfPages {
+            let alert = UIAlertController(title: nil, message: "There is No more images.", preferredStyle: .alert)
+            let action = UIAlertAction(title: "OK", style: .default) { (_) in
+                alert.dismiss(animated: true, completion: nil)
+            }
+            alert.addAction(action)
+            present(alert, animated: true, completion: nil)
+            return
+        }
+        
+        albumNumberInPage += 1
+        let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, imageUrlsFetched.count)
+        print("from/to/imageUrlsFetched.count: \(from)/\(to)/\(imageUrlsFetched.count)")
+        imageUrls = Array(imageUrlsFetched[from..<to])
+        collectionView.reloadData()
+        
+        /* Pre-fetch next page */
+        if to == imageUrlsFetched.count && pageNumber < totalOfPages {
+            albumNumberInPage = 0
+            pageNumber += 1
+            let pinCoordinate = pinView.annotation!.coordinate
+            FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
+                if let imageUrls = imageUrls as? [String] {
+                    self.imageUrlsFetched = imageUrls
+                    self.totalOfPages = totalOfPages
+                    print("totalOfPages: \(totalOfPages!)")
+                    return
+                }
+                
+                //TODO display error
+            }
+        }
     }
     
     private func configureUIBasedOnOrientation() {
@@ -109,8 +153,6 @@ class PhotoAlbumVC: UIViewController {
     
     private func setFlowLayoutPropertiesBasedOnOrientation(_ isPortrait: Bool) {
         let numItemsInRow: CGFloat = isPortrait ? 3 : 4
-        print("setFlowLayoutPropertiesBasedOnOrientation isPortrait   : \(isPortrait)")
-        print("setFlowLayoutPropertiesBasedOnOrientation numItemsInRow: \(numItemsInRow)")
         let spacing: CGFloat = 3.0
         let safeAreaWidth = UIApplication.shared.keyWindow!.safeAreaLayoutGuide.layoutFrame.width - 2.0 //since margin of colection view is 1 for each side
         let dimension = (safeAreaWidth - (numItemsInRow *  spacing) + spacing) / numItemsInRow

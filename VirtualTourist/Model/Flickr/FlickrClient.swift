@@ -48,13 +48,13 @@ class  FlickrClient {
 
     private func sendError(_ errorDescription: String,
                            _ domain: String,
-                           _ recipientCompletionHandler: (_ result: AnyObject?, _ error: Error?) -> Void) {
+                           _ recipientCompletionHandler: (_ result: AnyObject?, _ totalOfPages: Int?, _ error: Error?) -> Void) {
         let userInfo = [NSLocalizedDescriptionKey : errorDescription]
-        recipientCompletionHandler(nil, NSError(domain: domain, code: 1, userInfo: userInfo))
+        recipientCompletionHandler(nil, nil, NSError(domain: domain, code: 1, userInfo: userInfo))
     }
     
     private func startTaskForRequest(_ request: URLRequest,
-                                     completionHandler: @escaping (_ resultDictionary: AnyObject?, _ error: Error?) -> Void) {
+                                     completionHandler: @escaping (_ resultDictionary: AnyObject?, _ totalOfPages: Int?, _ error: Error?) -> Void) {
         let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
             let domain = "FlickrClient.startTaskForRequest"
             
@@ -77,7 +77,7 @@ class  FlickrClient {
             
             do {
                 let parsedResult = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as AnyObject
-                completionHandler(parsedResult, nil)
+                completionHandler(parsedResult, nil, nil)
             } catch {
                 let dataString: String = String(data: data, encoding: .utf8)!
                 let errormessage = "Could not parse the below data as JSON:\n\(dataString)"
@@ -89,11 +89,16 @@ class  FlickrClient {
     
     // Fetch list of Image URL strings around the given coordinate
     func imageUrlsAroundCoordinate(_ coordinate: CLLocationCoordinate2D,
-                                completionHandler: @escaping (_ imageUrls: AnyObject?, _ error: Error?) -> Void) {
+                                   pageNumber: Int,
+                                   pageSize: Int,
+                                   completionHandler: @escaping (_ imageUrls: AnyObject?, _ totalOfPages: Int?, _ error: Error?) -> Void) {
         var methodParameters: [String: Any] = commonMethodParameters
+        methodParameters[Constants.FlickrParameterKeys.Page] = pageNumber
+        methodParameters[Constants.FlickrParameterKeys.PerPage] = pageSize
         methodParameters[Constants.FlickrParameterKeys.BoundingBox] = bboxStringFromCoordinate(coordinate)
         let request = URLRequest(url: flickrURLFromParameters(methodParameters))
-        startTaskForRequest(request) { (resultDictionary, error) in
+        print("REQUEST: \(request.url!)")
+        startTaskForRequest(request) { (resultDictionary, totalOfPages, error) in
             let domain = "FlickrClient.imagesAroundCoordinate"
             if let error = error {
                 self.sendError(error.localizedDescription, domain, completionHandler)
@@ -114,11 +119,25 @@ class  FlickrClient {
                                 domain, completionHandler)
                 return
             }
+            
+            /* Calculate the actual number of pages based total, max number of results per search, and perpage */
+            guard let perpage = photosDictionary[Constants.FlickrResponseKeys.PerPage] as? Int,
+                  let total = photosDictionary[Constants.FlickrResponseKeys.Total] as? String else {
+                self.sendError("Cannot find keys 'perpage' and 'total' in \(photosDictionary)",
+                                domain, completionHandler)
+                return
+            }
+            print("perpage=\(perpage) photoArray.size=\(photoArray.count), total=\(total)")
+            let maxNumberOfResultsPerSearch = 4100
+            let actualNumberOfReturnedImages = min(Int(total)!, maxNumberOfResultsPerSearch)
+            let actualNumberOfPages = (actualNumberOfReturnedImages / perpage) + (actualNumberOfReturnedImages % perpage != 0 ? 1 : 0)
+            print("actualNumberOfReturnedImages: \(actualNumberOfReturnedImages)")
+            print("actualNumberOfPages         : \(actualNumberOfPages)")
 
             let imageUrls = photoArray.map {(photoDictionary) in
                 photoDictionary[Constants.FlickrResponseKeys.MediumURL] as! String
             }
-            completionHandler(imageUrls as AnyObject, nil)
+            completionHandler(imageUrls as AnyObject, actualNumberOfPages, nil)
         }
     }
 
