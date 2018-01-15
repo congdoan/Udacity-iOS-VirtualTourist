@@ -7,15 +7,46 @@
 //
 
 import UIKit
+import CoreData
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    let stack = CoreDataStack(modelName: "Model")!
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        // TEST: Load & Print All the Existing Pin objects
+        //let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Pin")
+        let fetchRequest = Pin.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true)]
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
+                                                                  managedObjectContext: stack.context,
+                                                                  sectionNameKeyPath: nil, cacheName: nil)
+        do {
+            try fetchedResultsController.performFetch()
+            if let pins = fetchedResultsController.fetchedObjects {
+                print("++++++++Pins in Core Data++++++++")
+                for pin in pins {
+                    print(pin)
+                }
+                print("--------Pins in Core Data--------")
+            }
+        } catch {
+            fatalError("Error fetching Pin objects: \(error)")
+        }
+
+        
+        // TEST: Create and Save couple of New Pin objects
+        let pinHanoi = Pin(latitude: 21.027764, longitude: 105.834160, context: stack.context)
+        let pinHoChiMinh = Pin(latitude: 10.823099, longitude: 106.629664, context: stack.context)
+        stack.save()
+        
+        print("application(_ application:, didFinishLaunchingWithOptions launchOptions:) EXIT!")
+        
         return true
     }
 
