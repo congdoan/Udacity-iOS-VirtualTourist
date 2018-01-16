@@ -8,6 +8,7 @@
 
 import UIKit
 import MapKit
+import CoreData
 
 // MARK: - TravelLocationsMapVC: UIViewController
 
@@ -20,6 +21,8 @@ class TravelLocationsMapVC: UIViewController {
 
         let touchAndHoldGesture = UILongPressGestureRecognizer(target: self, action: #selector(addPinAtLongPressPointOnMap))
         mapView.addGestureRecognizer(touchAndHoldGesture)
+        
+        loadSavedPins()
     }
     
     @objc func addPinAtLongPressPointOnMap(sender: UILongPressGestureRecognizer) {
@@ -33,6 +36,31 @@ class TravelLocationsMapVC: UIViewController {
         mapView.addAnnotation(pin)
     }
 
+}
+
+extension TravelLocationsMapVC {
+    
+    func loadSavedPins() {
+        let fetchRequest = Pin.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor]()
+        let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
+                                                                  managedObjectContext: mainContext,
+                                                                  sectionNameKeyPath: nil, cacheName: nil)
+        do {
+            try fetchedResultsController.performFetch()
+            if let pins = fetchedResultsController.fetchedObjects as? [Pin] {
+                for pin in pins {
+                    let annotation = MKPointAnnotation()
+                    annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
+                    mapView.addAnnotation(annotation)
+                }
+            }
+        } catch {
+            fatalError("Error fetching Pin objects: \(error)")
+        }
+    }
+    
 }
 
 // MARK: - TravelLocationsMapVC: MKMapViewDelegate
