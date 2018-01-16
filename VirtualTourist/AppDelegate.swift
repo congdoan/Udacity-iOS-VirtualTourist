@@ -36,7 +36,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     if let pinPhotos = pin.photos {
                         var j = 1
                         for photo in pinPhotos {
-                            print("    photo \(j): \((photo as! Photo).data!.count) bytes")
+                            print("    photo \(j): \(photo.data.count) bytes")
                             j += 1
                         }
                     }

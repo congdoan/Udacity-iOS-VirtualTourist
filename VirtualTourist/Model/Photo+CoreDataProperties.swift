@@ -20,7 +20,7 @@ extension Photo {
     */
 
     //@NSManaged public var data: NSData?
-    @NSManaged public var data: Data?
-    @NSManaged public var pin: Pin?
+    @NSManaged public var data: Data
+    @NSManaged public var pin: Pin
 
 }
