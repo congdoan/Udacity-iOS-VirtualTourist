@@ -13,7 +13,7 @@ class PhotoAlbumVC: UIViewController {
     
     var pinView: MKAnnotationView!, pin: Pin!, pinPhotos: [Photo]!
     var imageUrls = [String]()
-    var imageUrlsFetched: [String]!
+    var fetchedImageUrls: [String]!
     let albumSize = 24, pageSize = 4 * 24
     var albumNumberInPage = 1, pageNumber = 1
     var totalOfPages: Int!
@@ -42,22 +42,21 @@ class PhotoAlbumVC: UIViewController {
             pinPhotos = Array(photos)
             selectedItems = Array(repeating: false, count: pinPhotos.count)
             collectionView.reloadData()
-            return
+        } else {
+            downloadPhotosForPinFromFlickr()
         }
-        
-        downloadPhotosForPinFromFlickr()
     }
     
     private func downloadPhotosForPinFromFlickr() {
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
-            if let imageUrlsFetched = imageUrls as? [String] {
-                self.imageUrlsFetched = imageUrlsFetched
+            if let fetchedImageUrls = imageUrls as? [String] {
+                self.fetchedImageUrls = fetchedImageUrls
                 self.totalOfPages = totalOfPages
                 print("totalOfPages: \(totalOfPages!)")
-                let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, imageUrlsFetched.count)
-                print("from/to/imageUrlsFetched.count: \(from)/\(to)/\(imageUrlsFetched.count)")
-                self.imageUrls = Array(imageUrlsFetched[from..<to])
+                let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrls.count)
+                print("from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrls.count)")
+                self.imageUrls = Array(fetchedImageUrls[from..<to])
                 self.selectedItems = Array(repeating: false, count: to - from)
                 self.fetchedImages = Array(repeating: nil, count: to - from)
                 DispatchQueue.main.async {
@@ -73,20 +72,18 @@ class PhotoAlbumVC: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
         
-        guard let fetchedImages = fetchedImages else {
-            return
-        }
-        
-        /* Save the Pin and its Photos via Core Data */
-        let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
-        for uiImage in fetchedImages {
-            if let uiImage = uiImage {
-                let data = UIImagePNGRepresentation(uiImage)!
-                let _ = Photo(data: data, pin: pin, context: coreDataStack.context)
+        if let fetchedImages = fetchedImages {
+            /* Save the Pin and its Photos via Core Data */
+            let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
+            for uiImage in fetchedImages {
+                if let uiImage = uiImage {
+                    let data = UIImagePNGRepresentation(uiImage)!
+                    let _ = Photo(data: data, pin: pin, context: coreDataStack.context)
+                }
             }
+            coreDataStack.save()
+            print("coreDataStack.save() DONE!")
         }
-        coreDataStack.save()
-        print("coreDataStack.save() DONE!")
     }
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
@@ -104,32 +101,32 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func displayNextAlbumOfPhotos() {
-        guard let imageUrlsFetched = imageUrlsFetched else {
+        guard let fetchedImageUrls = fetchedImageUrls else {
             downloadPhotosForPinFromFlickr()
             return
         }
         
-        if albumNumberInPage * albumSize >= imageUrlsFetched.count && pageNumber >= totalOfPages {
+        if albumNumberInPage * albumSize >= fetchedImageUrls.count && pageNumber >= totalOfPages {
             showAlert()
             return
         }
         
         albumNumberInPage += 1
-        let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, imageUrlsFetched.count)
-        print("from/to/imageUrlsFetched.count: \(from)/\(to)/\(imageUrlsFetched.count)")
-        imageUrls = Array(imageUrlsFetched[from..<to])
+        let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, fetchedImageUrls.count)
+        print("from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrls.count)")
+        imageUrls = Array(fetchedImageUrls[from..<to])
         selectedItems = Array(repeating: false, count: to - from)
         fetchedImages = Array(repeating: nil, count: to - from)
         collectionView.reloadData()
         
         /* Pre-fetch next page */
-        if to == imageUrlsFetched.count && pageNumber < totalOfPages {
+        if to == fetchedImageUrls.count && pageNumber < totalOfPages {
             albumNumberInPage = 0
             pageNumber += 1
             let pinCoordinate = pinView.annotation!.coordinate
             FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
                 if let imageUrls = imageUrls as? [String] {
-                    self.imageUrlsFetched = imageUrls
+                    self.fetchedImageUrls = imageUrls
                     self.totalOfPages = totalOfPages
                     print("totalOfPages: \(totalOfPages!)")
                     return
@@ -141,15 +138,29 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func removeSelectedPhotos() {
-        var newImageUrls = [String]()
-        for i in 0..<selectedItems.count {
-            if !selectedItems[i] {
-                newImageUrls.append(imageUrls[i])
+        if imageUrls.count > 0 {
+            var newImageUrls = [String]()
+            for i in 0..<selectedItems.count {
+                if !selectedItems[i] {
+                    newImageUrls.append(imageUrls[i])
+                }
             }
+            imageUrls = newImageUrls
+            selectedItems = Array(repeating: false, count: imageUrls.count)
+        } else {
+            let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
+            for i in 0..<selectedItems.count {
+                if selectedItems[i] {
+                    //pin.photos!.remove(pinPhotos[i])
+                    pin.removeFromPhotos(pinPhotos[i])
+                    coreDataStack.context.delete(pinPhotos[i])
+                }
+            }
+            coreDataStack.save()
+            pinPhotos = Array(pin.photos!)
+            selectedItems = Array(repeating: false, count: pinPhotos.count)
         }
-        imageUrls = newImageUrls
         collectionView.reloadData()
-        selectedItems = Array(repeating: false, count: imageUrls.count)
         selectedItemCount = 0
         button.setTitle("New Collection", for: .normal)
     }
@@ -289,7 +300,7 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
 extension PhotoAlbumVC: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard fetchedImages[indexPath.item] != nil else {
+        guard imageUrls.count == 0 || fetchedImages[indexPath.item] != nil else {
             return
         }
         selectedItems[indexPath.item] = !selectedItems[indexPath.item]
