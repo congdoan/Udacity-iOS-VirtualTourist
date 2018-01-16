@@ -55,6 +55,23 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        /* Save the Pin and its Photos via Core Data */
+        let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
+        let pinCoordinate = pinView.annotation!.coordinate
+        let pin = Pin(latitude: pinCoordinate.latitude, longitude: pinCoordinate.longitude, context: coreDataStack.context)
+        for uiImage in fetchedImages {
+            if let uiImage = uiImage {
+                let data = UIImagePNGRepresentation(uiImage)!
+                let photo = Photo(data: data, pin: pin, context: coreDataStack.context)
+            }
+        }
+        coreDataStack.save()
+        print("coreDataStack.save() DONE!")
+        
+        super.viewWillDisappear(true)
+    }
+    
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         //super.didRotate(from: fromInterfaceOrientation)
         

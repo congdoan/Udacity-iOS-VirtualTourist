@@ -13,40 +13,54 @@ import CoreData
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    let stack = CoreDataStack(modelName: "Model")!
+    let coreDataStack = CoreDataStack(modelName: "Model")!
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        // TEST: Load & Print All the Existing Pin objects
-        //let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Pin")
-        let fetchRequest = Pin.fetchRequest()
+        // TEST: Load & Print All the Existing Pin and Photo objects
+        var fetchRequest = Pin.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true)]
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
-                                                                  managedObjectContext: stack.context,
+        var fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
+                                                                  managedObjectContext: coreDataStack.context,
                                                                   sectionNameKeyPath: nil, cacheName: nil)
         do {
             try fetchedResultsController.performFetch()
-            if let pins = fetchedResultsController.fetchedObjects {
+            if let pins = fetchedResultsController.fetchedObjects as? [Pin] {
                 print("++++++++Pins in Core Data++++++++")
+                var i = 1
                 for pin in pins {
-                    print(pin)
+                    print("Pin \(i): latitude=\(pin.latitude), longitude=\(pin.longitude)")
+                    i += 1
                 }
                 print("--------Pins in Core Data--------")
             }
         } catch {
             fatalError("Error fetching Pin objects: \(error)")
         }
+        
+        fetchRequest = Photo.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor]()
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
+                                                              managedObjectContext: coreDataStack.context,
+                                                              sectionNameKeyPath: nil, cacheName: nil)
+        do {
+            try fetchedResultsController.performFetch()
+            if let photos = fetchedResultsController.fetchedObjects as? [Photo] {
+                print("++++++++Photos in Core Data++++++++")
+                var i = 1
+                for photo in photos {
+                    print("Photo \(i): \(photo.data!.count) bytes")
+                    i += 1
+                }
+                print("--------Photos in Core Data--------")
+            }
+        } catch {
+            fatalError("Error fetching Photo objects: \(error)")
+        }
+        
 
-        
-        // TEST: Create and Save couple of New Pin objects
-        let pinHanoi = Pin(latitude: 21.027764, longitude: 105.834160, context: stack.context)
-        let pinHoChiMinh = Pin(latitude: 10.823099, longitude: 106.629664, context: stack.context)
-        stack.save()
-        
-        print("application(_ application:, didFinishLaunchingWithOptions launchOptions:) EXIT!")
-        
         return true
     }
 
