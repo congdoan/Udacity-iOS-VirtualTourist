@@ -38,7 +38,7 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func loadPinPhotos() {
-        if let pin = pin, let photos = pin.photos {
+        if let photos = pin.photos, photos.count > 0 {
             pinPhotos = Array(photos)
             selectedItems = Array(repeating: false, count: pinPhotos.count)
             collectionView.reloadData()
@@ -79,8 +79,6 @@ class PhotoAlbumVC: UIViewController {
         
         /* Save the Pin and its Photos via Core Data */
         let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
-        let pinCoordinate = pinView.annotation!.coordinate
-        let pin = Pin(latitude: pinCoordinate.latitude, longitude: pinCoordinate.longitude, context: coreDataStack.context)
         for uiImage in fetchedImages {
             if let uiImage = uiImage {
                 let data = UIImagePNGRepresentation(uiImage)!

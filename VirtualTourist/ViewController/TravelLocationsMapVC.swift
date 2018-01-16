@@ -14,7 +14,7 @@ import CoreData
 
 class TravelLocationsMapVC: UIViewController {
     
-    var annotationToPinMap: [MKPointAnnotation : Pin]!
+    var annotationToPinDict: [MKPointAnnotation : Pin]!
 
     @IBOutlet weak var mapView: MKMapView!
     
@@ -23,12 +23,6 @@ class TravelLocationsMapVC: UIViewController {
 
         let touchAndHoldGesture = UILongPressGestureRecognizer(target: self, action: #selector(addPinAtLongPressPointOnMap))
         mapView.addGestureRecognizer(touchAndHoldGesture)
-        
-        //loadSavedPins()
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
         
         loadSavedPins()
     }
@@ -39,9 +33,12 @@ class TravelLocationsMapVC: UIViewController {
         }
         let touchPoint = sender.location(in: mapView)
         let touchCoordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView)
-        let pin = MKPointAnnotation()
-        pin.coordinate = touchCoordinate
-        mapView.addAnnotation(pin)
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = touchCoordinate
+        mapView.addAnnotation(annotation)
+        let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
+        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: mainContext)
+        annotationToPinDict[annotation] = pin
     }
 
 }
@@ -49,7 +46,7 @@ class TravelLocationsMapVC: UIViewController {
 extension TravelLocationsMapVC {
     
     func loadSavedPins() {
-        annotationToPinMap = [MKPointAnnotation : Pin]()
+        annotationToPinDict = [MKPointAnnotation : Pin]()
         let fetchRequest = Pin.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor]()
         let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
@@ -63,7 +60,7 @@ extension TravelLocationsMapVC {
                 for pin in pins {
                     let annotation = MKPointAnnotation()
                     annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
-                    annotationToPinMap[annotation] = pin
+                    annotationToPinDict[annotation] = pin
                     mapView.addAnnotation(annotation)
                 }
             }
@@ -96,7 +93,7 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
         photoAlbumVC.pinView = view
-        photoAlbumVC.pin = annotationToPinMap[view.annotation as! MKPointAnnotation]
+        photoAlbumVC.pin = annotationToPinDict[view.annotation as! MKPointAnnotation]
         navigationController!.pushViewController(photoAlbumVC, animated: true)
     }
     
