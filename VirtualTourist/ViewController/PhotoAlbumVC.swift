@@ -63,7 +63,7 @@ class PhotoAlbumVC: UIViewController {
         for uiImage in fetchedImages {
             if let uiImage = uiImage {
                 let data = UIImagePNGRepresentation(uiImage)!
-                let photo = Photo(data: data, pin: pin, context: coreDataStack.context)
+                let _ = Photo(data: data, pin: pin, context: coreDataStack.context)
             }
         }
         coreDataStack.save()

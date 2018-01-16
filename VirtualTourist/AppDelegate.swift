@@ -19,10 +19,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        // TEST: Load & Print All the Existing Pin and Photo objects
-        var fetchRequest = Pin.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true)]
-        var fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
+        // TEST: Load & Print each of the existing Pin objects along with its set of Photo objects
+        let fetchRequest = Pin.fetchRequest()
+        //fetchRequest.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true)]
+        fetchRequest.sortDescriptors = [NSSortDescriptor]()
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
                                                                   managedObjectContext: coreDataStack.context,
                                                                   sectionNameKeyPath: nil, cacheName: nil)
         do {
@@ -32,6 +33,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 var i = 1
                 for pin in pins {
                     print("Pin \(i): latitude=\(pin.latitude), longitude=\(pin.longitude)")
+                    if let pinPhotos = pin.photos {
+                        var j = 1
+                        for photo in pinPhotos {
+                            print("    photo \(j): \((photo as! Photo).data!.count) bytes")
+                            j += 1
+                        }
+                    }
                     i += 1
                 }
                 print("--------Pins in Core Data--------")
@@ -39,27 +47,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         } catch {
             fatalError("Error fetching Pin objects: \(error)")
         }
-        
-        fetchRequest = Photo.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor]()
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
-                                                              managedObjectContext: coreDataStack.context,
-                                                              sectionNameKeyPath: nil, cacheName: nil)
-        do {
-            try fetchedResultsController.performFetch()
-            if let photos = fetchedResultsController.fetchedObjects as? [Photo] {
-                print("++++++++Photos in Core Data++++++++")
-                var i = 1
-                for photo in photos {
-                    print("Photo \(i): \(photo.data!.count) bytes")
-                    i += 1
-                }
-                print("--------Photos in Core Data--------")
-            }
-        } catch {
-            fatalError("Error fetching Photo objects: \(error)")
-        }
-        
 
         return true
     }
