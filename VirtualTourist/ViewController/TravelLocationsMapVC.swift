@@ -13,6 +13,8 @@ import CoreData
 // MARK: - TravelLocationsMapVC: UIViewController
 
 class TravelLocationsMapVC: UIViewController {
+    
+    var annotationToPinMap: [MKPointAnnotation : Pin]!
 
     @IBOutlet weak var mapView: MKMapView!
     
@@ -21,6 +23,12 @@ class TravelLocationsMapVC: UIViewController {
 
         let touchAndHoldGesture = UILongPressGestureRecognizer(target: self, action: #selector(addPinAtLongPressPointOnMap))
         mapView.addGestureRecognizer(touchAndHoldGesture)
+        
+        //loadSavedPins()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
         loadSavedPins()
     }
@@ -41,6 +49,7 @@ class TravelLocationsMapVC: UIViewController {
 extension TravelLocationsMapVC {
     
     func loadSavedPins() {
+        annotationToPinMap = [MKPointAnnotation : Pin]()
         let fetchRequest = Pin.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor]()
         let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
@@ -50,9 +59,11 @@ extension TravelLocationsMapVC {
         do {
             try fetchedResultsController.performFetch()
             if let pins = fetchedResultsController.fetchedObjects as? [Pin] {
+                mapView.removeAnnotations(mapView.annotations)
                 for pin in pins {
                     let annotation = MKPointAnnotation()
                     annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
+                    annotationToPinMap[annotation] = pin
                     mapView.addAnnotation(annotation)
                 }
             }
@@ -85,6 +96,7 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
         photoAlbumVC.pinView = view
+        photoAlbumVC.pin = annotationToPinMap[view.annotation as! MKPointAnnotation]
         navigationController!.pushViewController(photoAlbumVC, animated: true)
     }
     

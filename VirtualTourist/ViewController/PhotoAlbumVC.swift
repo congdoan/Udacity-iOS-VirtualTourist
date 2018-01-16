@@ -11,7 +11,7 @@ import MapKit
 
 class PhotoAlbumVC: UIViewController {
     
-    var pinView: MKAnnotationView!
+    var pinView: MKAnnotationView!, pin: Pin!, pinPhotos: [Photo]!
     var imageUrls = [String]()
     var imageUrlsFetched: [String]!
     let albumSize = 24, pageSize = 4 * 24
@@ -34,6 +34,21 @@ class PhotoAlbumVC: UIViewController {
         
         configureUIBasedOnOrientation()
         
+        loadPinPhotos()
+    }
+    
+    private func loadPinPhotos() {
+        if let pin = pin, let photos = pin.photos {
+            pinPhotos = Array(photos)
+            selectedItems = Array(repeating: false, count: pinPhotos.count)
+            collectionView.reloadData()
+            return
+        }
+        
+        downloadPhotosForPinFromFlickr()
+    }
+    
+    private func downloadPhotosForPinFromFlickr() {
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
             if let imageUrlsFetched = imageUrls as? [String] {
@@ -56,6 +71,12 @@ class PhotoAlbumVC: UIViewController {
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(true)
+        
+        guard let fetchedImages = fetchedImages else {
+            return
+        }
+        
         /* Save the Pin and its Photos via Core Data */
         let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
         let pinCoordinate = pinView.annotation!.coordinate
@@ -68,8 +89,6 @@ class PhotoAlbumVC: UIViewController {
         }
         coreDataStack.save()
         print("coreDataStack.save() DONE!")
-        
-        super.viewWillDisappear(true)
     }
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
@@ -87,6 +106,11 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func displayNextAlbumOfPhotos() {
+        guard let imageUrlsFetched = imageUrlsFetched else {
+            downloadPhotosForPinFromFlickr()
+            return
+        }
+        
         if albumNumberInPage * albumSize >= imageUrlsFetched.count && pageNumber >= totalOfPages {
             showAlert()
             return
@@ -217,11 +241,21 @@ class PhotoAlbumVC: UIViewController {
 extension PhotoAlbumVC: UICollectionViewDataSource {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return imageUrls.count
+        if let photos = pinPhotos {
+            return photos.count
+        } else {
+            return imageUrls.count
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCell", for: indexPath) as! PhotoAlbumCell
+        
+        if let photos = pinPhotos {
+            cell.imageView.image = UIImage(data: photos[indexPath.item].data)
+            cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
+            return cell
+        }
         
         if let image = fetchedImages[indexPath.item] {
             cell.imageView.image = image
