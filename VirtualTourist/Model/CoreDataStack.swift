@@ -158,6 +158,14 @@ extension CoreDataStack {
 
 extension CoreDataStack {
     
+    func fetchPins() -> [Pin] {
+        do {
+            return try context.fetch(Pin.request())
+        } catch {
+            fatalError("Error Fetching Pin objects: \(error)")
+        }
+    }
+    
     func fetchPinsAsync(completionHandler: @escaping (_ pins: [Pin]) -> Void) {
         // Initialize Asynchronous Fetch Request
         let asyncRequest = NSAsynchronousFetchRequest(fetchRequest: Pin.request()) { (asyncResult) in
@@ -174,6 +182,17 @@ extension CoreDataStack {
             try backgroundContext.execute(asyncRequest)
         } catch {
             fatalError("Error Async-Fetching Pin objects: \(error)")
+        }
+    }
+    
+    func fetchPinsAsync2(completionHandler: @escaping (_ pins: [Pin]) -> Void) {
+        backgroundContext.perform {
+            do {
+                let pins = try self.backgroundContext.fetch(Pin.request())
+                completionHandler(pins)
+            } catch {
+                fatalError("Error Async-Fetching Pin objects: \(error)")
+            }
         }
     }
     
