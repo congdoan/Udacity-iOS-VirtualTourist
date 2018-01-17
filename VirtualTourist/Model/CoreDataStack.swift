@@ -27,7 +27,7 @@ struct CoreDataStack {
     init?(modelName: String) { 
         // Assumes the model is in the main bundle
         guard let modelURL = Bundle.main.url(forResource: modelName, withExtension: "momd") else {
-            print("Unable to find \(modelName)in the main bundle")
+            print("Unable to find \(modelName) in the main bundle")
             return nil
         }
         self.modelURL = modelURL
@@ -149,4 +149,36 @@ extension CoreDataStack {
         }
     }
 
+}
+// MARK: - CoreDataStack (Fetch Data)
+
+extension CoreDataStack {
+    
+    func fetchPins() -> [Pin] {
+        do {
+            return try context.fetch(Pin.request())
+        } catch {
+            fatalError("Error Fetching Pin objects: \(error)")
+        }
+    }
+    
+    func fetchPinsAsync(completionHandler: @escaping (_ pins: [Pin]) -> Void) {
+        // Initialize Asynchronous Fetch Request
+        let asyncRequest = NSAsynchronousFetchRequest(fetchRequest: Pin.request()) { (asyncResult) in
+            if let pins = asyncResult.finalResult {
+                completionHandler(pins)
+            } else {
+                completionHandler([Pin]())
+            }
+        }
+        
+        // Execute Asynchronous Fetch Request using a Background (Private-Queue) Context
+        do {
+            //try persistingContext.execute(asyncRequest)
+            try backgroundContext.execute(asyncRequest)
+        } catch {
+            fatalError("Error Async-Fetching Pin objects: \(error)")
+        }
+    }
+    
 }

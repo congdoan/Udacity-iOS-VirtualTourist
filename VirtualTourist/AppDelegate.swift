@@ -20,33 +20,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         
         // TEST: Load & Print each of the existing Pin objects along with its set of Photo objects
-        let fetchRequest = Pin.fetchRequest()
-        //fetchRequest.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true)]
-        fetchRequest.sortDescriptors = [NSSortDescriptor]()
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
-                                                                  managedObjectContext: coreDataStack.context,
-                                                                  sectionNameKeyPath: nil, cacheName: nil)
-        do {
-            try fetchedResultsController.performFetch()
-            if let pins = fetchedResultsController.fetchedObjects as? [Pin] {
-                print("++++++++Pins in Core Data++++++++")
-                var i = 1
-                for pin in pins {
-                    print("Pin \(i): latitude=\(pin.latitude), longitude=\(pin.longitude)")
-                    if let pinPhotos = pin.photos {
-                        var j = 1
-                        for photo in pinPhotos {
-                            print("    photo \(j): \(photo.data.count) bytes")
-                            j += 1
-                        }
-                    }
-                    i += 1
+        print("++++++++Pins in Core Data++++++++")
+        var i = 1
+        for pin in coreDataStack.fetchPins() {
+            print("Pin \(i): latitude=\(pin.latitude), longitude=\(pin.longitude)")
+            if let pinPhotos = pin.photos {
+                var j = 1
+                for photo in pinPhotos {
+                    print("    photo \(j): \(photo.data.count) bytes")
+                    j += 1
                 }
-                print("--------Pins in Core Data--------")
             }
-        } catch {
-            fatalError("Error fetching Pin objects: \(error)")
+            i += 1
         }
+        print("--------Pins in Core Data--------")
 
         return true
     }

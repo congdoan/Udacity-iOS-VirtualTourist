@@ -47,25 +47,20 @@ extension TravelLocationsMapVC {
     
     func loadSavedPins() {
         annotationToPinDict = [MKPointAnnotation : Pin]()
-        let fetchRequest = Pin.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor]()
-        let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest,
-                                                                  managedObjectContext: mainContext,
-                                                                  sectionNameKeyPath: nil, cacheName: nil)
-        do {
-            try fetchedResultsController.performFetch()
-            if let pins = fetchedResultsController.fetchedObjects as? [Pin] {
-                mapView.removeAnnotations(mapView.annotations)
-                for pin in pins {
-                    let annotation = MKPointAnnotation()
-                    annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
-                    annotationToPinDict[annotation] = pin
-                    mapView.addAnnotation(annotation)
-                }
+        coreDataStack.fetchPinsAsync { (pins) in
+            print("Thread.current     : \(Thread.current)")
+            print("Thread.isMainThread: \(Thread.isMainThread)")
+            guard pins.count > 0 else { return }
+            var annotations = [MKAnnotation]()
+            for pin in pins {
+                let annotation = MKPointAnnotation()
+                annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
+                annotations.append(annotation)
+                self.annotationToPinDict[annotation] = pin
             }
-        } catch {
-            fatalError("Error fetching Pin objects: \(error)")
+            DispatchQueue.main.async {
+                self.mapView.addAnnotations(annotations)
+            }
         }
     }
     

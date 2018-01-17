@@ -18,6 +18,9 @@ extension Pin {
         return NSFetchRequest<Pin>(entityName: "Pin")
     }
     */
+    @nonobjc public class func request() -> NSFetchRequest<Pin> {
+        return NSFetchRequest<Pin>(entityName: "Pin")
+    }
 
     @NSManaged public var latitude: Double
     @NSManaged public var longitude: Double
