@@ -40,7 +40,7 @@ class PhotoAlbumVC: UIViewController {
     
     private func loadPinPhotos() {
         if let photos = pin.photos, photos.count > 0 {
-            pinPhotos = Array(photos)
+            pinPhotos = Array(photos) as! [Photo]
             selectedItems = Array(repeating: false, count: pinPhotos.count)
             collectionView.reloadData()
         } else {
@@ -161,7 +161,7 @@ class PhotoAlbumVC: UIViewController {
                     persistingContext.delete(pinPhotos[i])
                 }
             }
-            pinPhotos = Array(pin.photos!)
+            pinPhotos = Array(pin.photos!) as! [Photo]
             selectedItems = Array(repeating: false, count: pinPhotos.count)
         }
         collectionView.reloadData()
