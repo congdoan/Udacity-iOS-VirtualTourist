@@ -61,13 +61,6 @@ class PhotoAlbumVC: UIViewController {
                 self.selectedItems = Array(repeating: false, count: to - from)
                 self.fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
                 DispatchQueue.main.async {
-                    if self.pinPhotos.count > 0 {
-                        //reason: An NSManagedObjectContext cannot delete objects in other contexts.
-                        let backgroundContext = self.coreDataStack.backgroundContext
-                        for photo in self.pinPhotos {
-                            backgroundContext.delete(photo)
-                        }
-                    }
                     self.collectionView.reloadData()
                 }
                 return
@@ -82,11 +75,17 @@ class PhotoAlbumVC: UIViewController {
         
         if let fetchedImagesOfAlbum = fetchedImagesOfAlbum {
             /* Save the Pin and its Photos */
-            coreDataStack.performBackgroundBatchOperation({ (backgroundContext) in
+            coreDataStack.performBackgroundBatchOperation({ (persistingContext) in
+                if self.pinPhotos.count > 0 {
+                    //reason: An NSManagedObjectContext cannot delete objects in other contexts.
+                    for photo in self.pinPhotos {
+                        persistingContext.delete(photo)
+                    }
+                }
                 for uiImage in fetchedImagesOfAlbum {
                     if let uiImage = uiImage {
                         let data = UIImagePNGRepresentation(uiImage)!
-                        let _ = Photo(data: data, pin: self.pin, context: backgroundContext)
+                        let _ = Photo(data: data, pin: self.pin, context: persistingContext)
                     }
                 }
             })
@@ -155,15 +154,13 @@ class PhotoAlbumVC: UIViewController {
             imageUrlsOfAlbum = newImageUrls
             selectedItems = Array(repeating: false, count: imageUrlsOfAlbum.count)
         } else {
-            let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
+            let persistingContext = coreDataStack.persistingContext
             for i in 0..<selectedItems.count {
                 if selectedItems[i] {
-                    //pin.photos!.remove(pinPhotos[i])
                     pin.removeFromPhotos(pinPhotos[i])
-                    coreDataStack.context.delete(pinPhotos[i])
+                    persistingContext.delete(pinPhotos[i])
                 }
             }
-            coreDataStack.save()
             pinPhotos = Array(pin.photos!)
             selectedItems = Array(repeating: false, count: pinPhotos.count)
         }

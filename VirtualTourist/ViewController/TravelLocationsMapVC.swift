@@ -37,8 +37,8 @@ class TravelLocationsMapVC: UIViewController {
         annotation.coordinate = touchCoordinate
         mapView.addAnnotation(annotation)
         //reason: Illegal attempt to establish a relationship 'pin' between objects in different contexts.
-        let backgroundContext = coreDataStack.backgroundContext
-        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: backgroundContext)
+        let persistingContext = coreDataStack.persistingContext
+        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: persistingContext)
         annotationToPinDict[annotation] = pin
     }
 
@@ -48,19 +48,7 @@ extension TravelLocationsMapVC {
     
     func loadSavedPins() {
         annotationToPinDict = [MKPointAnnotation : Pin]()
-        /*
-         var annotations = [MKAnnotation]()
-         let pins = coreDataStack.fetchPins()
-         for pin in pins {
-         let annotation = MKPointAnnotation()
-         annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
-         annotations.append(annotation)
-         annotationToPinDict[annotation] = pin
-         }
-         mapView.addAnnotations(annotations)
-        */
-        //coreDataStack.fetchPinsAsync { (pins) in
-        coreDataStack.fetchPinsAsync2 { (pins) in
+        coreDataStack.fetchPinsAsync { (pins) in
             guard pins.count > 0 else { return }
             var annotations = [MKAnnotation]()
             for pin in pins {
@@ -70,11 +58,9 @@ extension TravelLocationsMapVC {
                 self.annotationToPinDict[annotation] = pin
             }
             DispatchQueue.main.async {
-                print("coreDataStack.fetchPinsAsync2 RETURNED at \(Date())")
                 self.mapView.addAnnotations(annotations)
             }
         }
-        print("loadSavedPins RETURNED                 at \(Date())")
     }
     
 }
