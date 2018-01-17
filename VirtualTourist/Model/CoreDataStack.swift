@@ -119,6 +119,10 @@ extension CoreDataStack {
                     fatalError("Error while saving Main Context: \(error)")
                 }
                 
+                //DEBUG
+                print("CoreDataStack.save() Thread.current     : \(Thread.current)")
+                print("CoreDataStack.save() Thread.isMainThread: \(Thread.isMainThread)")
+
                 // Now we save in the background
                 self.persistingContext.perform() {
                     do {
@@ -153,14 +157,6 @@ extension CoreDataStack {
 // MARK: - CoreDataStack (Fetch Data)
 
 extension CoreDataStack {
-    
-    func fetchPins() -> [Pin] {
-        do {
-            return try context.fetch(Pin.request())
-        } catch {
-            fatalError("Error Fetching Pin objects: \(error)")
-        }
-    }
     
     func fetchPinsAsync(completionHandler: @escaping (_ pins: [Pin]) -> Void) {
         // Initialize Asynchronous Fetch Request

@@ -133,7 +133,7 @@ class  FlickrClient {
             print("actualNumberOfPages         : \(actualNumberOfPages)")
 
             let imageUrls = photoArray.map {(photoDictionary) in
-                photoDictionary[Constants.FlickrResponseKeys.MediumURL] as! String
+                photoDictionary[Constants.FlickrResponseKeys.MediumURL] as! String//Unexpectedly found nil while unwrapping an Optional value
             }
             completionHandler(imageUrls as AnyObject, actualNumberOfPages, nil)
         }

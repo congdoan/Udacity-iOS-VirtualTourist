@@ -62,9 +62,10 @@ class PhotoAlbumVC: UIViewController {
                 self.fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
                 DispatchQueue.main.async {
                     if self.pinPhotos.count > 0 {
-                        let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
+                        //reason: An NSManagedObjectContext cannot delete objects in other contexts.
+                        let backgroundContext = self.coreDataStack.backgroundContext
                         for photo in self.pinPhotos {
-                            mainContext.delete(photo)
+                            backgroundContext.delete(photo)
                         }
                     }
                     self.collectionView.reloadData()
@@ -80,15 +81,15 @@ class PhotoAlbumVC: UIViewController {
         super.viewWillDisappear(true)
         
         if let fetchedImagesOfAlbum = fetchedImagesOfAlbum {
-            /* Save the Pin and its Photos via Core Data */
-            let coreDataStack = (UIApplication.shared.delegate as! AppDelegate).coreDataStack
-            for uiImage in fetchedImagesOfAlbum {
-                if let uiImage = uiImage {
-                    let data = UIImagePNGRepresentation(uiImage)!
-                    let _ = Photo(data: data, pin: pin, context: coreDataStack.context)
+            /* Save the Pin and its Photos */
+            coreDataStack.performBackgroundBatchOperation({ (backgroundContext) in
+                for uiImage in fetchedImagesOfAlbum {
+                    if let uiImage = uiImage {
+                        let data = UIImagePNGRepresentation(uiImage)!
+                        let _ = Photo(data: data, pin: self.pin, context: backgroundContext)
+                    }
                 }
-            }
-            coreDataStack.save()
+            })
         }
     }
     

@@ -36,8 +36,9 @@ class TravelLocationsMapVC: UIViewController {
         let annotation = MKPointAnnotation()
         annotation.coordinate = touchCoordinate
         mapView.addAnnotation(annotation)
-        let mainContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.context
-        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: mainContext)
+        //reason: Illegal attempt to establish a relationship 'pin' between objects in different contexts.
+        let backgroundContext = (UIApplication.shared.delegate as! AppDelegate).coreDataStack.backgroundContext
+        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: backgroundContext)
         annotationToPinDict[annotation] = pin
     }
 
@@ -48,8 +49,6 @@ extension TravelLocationsMapVC {
     func loadSavedPins() {
         annotationToPinDict = [MKPointAnnotation : Pin]()
         coreDataStack.fetchPinsAsync { (pins) in
-            print("Thread.current     : \(Thread.current)")
-            print("Thread.isMainThread: \(Thread.isMainThread)")
             guard pins.count > 0 else { return }
             var annotations = [MKAnnotation]()
             for pin in pins {
