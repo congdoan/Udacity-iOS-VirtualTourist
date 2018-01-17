@@ -77,7 +77,6 @@ class PhotoAlbumVC: UIViewController {
             /* Save the Pin and its Photos */
             coreDataStack.performBackgroundBatchOperation({ (persistingContext) in
                 if self.pinPhotos.count > 0 {
-                    //reason: An NSManagedObjectContext cannot delete objects in other contexts.
                     for photo in self.pinPhotos {
                         persistingContext.delete(photo)
                     }

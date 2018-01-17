@@ -36,7 +36,6 @@ class TravelLocationsMapVC: UIViewController {
         let annotation = MKPointAnnotation()
         annotation.coordinate = touchCoordinate
         mapView.addAnnotation(annotation)
-        //reason: Illegal attempt to establish a relationship 'pin' between objects in different contexts.
         let persistingContext = coreDataStack.persistingContext
         let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: persistingContext)
         annotationToPinDict[annotation] = pin
