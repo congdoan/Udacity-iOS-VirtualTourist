@@ -145,13 +145,16 @@ class PhotoAlbumVC: UIViewController {
     
     private func removeSelectedPhotos() {
         if imageUrlsOfAlbum.count > 0 {
-            var newImageUrls = [String]()
+            var unselectedImageUrls = [String]()
+            var unselectedImages = [UIImage?]()
             for i in 0..<selectedItems.count {
                 if !selectedItems[i] {
-                    newImageUrls.append(imageUrlsOfAlbum[i])
+                    unselectedImageUrls.append(imageUrlsOfAlbum[i])
+                    unselectedImages.append(fetchedImagesOfAlbum[i])
                 }
             }
-            imageUrlsOfAlbum = newImageUrls
+            imageUrlsOfAlbum = unselectedImageUrls
+            fetchedImagesOfAlbum = unselectedImages
             selectedItems = Array(repeating: false, count: imageUrlsOfAlbum.count)
         } else {
             let persistingContext = coreDataStack.persistingContext
