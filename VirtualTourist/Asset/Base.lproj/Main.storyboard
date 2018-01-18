@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="e6t-2W-hfr">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="e6t-2W-hfr">
     <device id="retina5_9" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -134,12 +134,19 @@
                                     <outlet property="delegate" destination="ddf-rH-uYN" id="6DA-Ii-zr8"/>
                                 </connections>
                             </collectionView>
+                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="This pin has no images." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="v6J-Da-6dM">
+                                <rect key="frame" x="97.666666666666671" y="401" width="179.66666666666663" height="20.333333333333314"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="54E-xT-2Dh" firstAttribute="top" secondItem="kMF-S8-g0d" secondAttribute="bottom" constant="1" id="4JY-ln-Eby"/>
                             <constraint firstItem="54E-xT-2Dh" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" id="8Bg-4c-det"/>
                             <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="x3c-xb-pyz" secondAttribute="trailing" id="CDY-Cs-Gx6"/>
+                            <constraint firstItem="v6J-Da-6dM" firstAttribute="centerX" secondItem="tTr-VO-HJQ" secondAttribute="centerX" id="H5N-Km-y8P"/>
                             <constraint firstItem="b2o-F4-zpY" firstAttribute="centerY" secondItem="x3c-xb-pyz" secondAttribute="centerY" id="IjW-hV-XMv"/>
                             <constraint firstItem="x3c-xb-pyz" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" id="JrY-zm-iM5"/>
                             <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="54E-xT-2Dh" secondAttribute="trailing" id="MBx-Df-6t5"/>
@@ -148,6 +155,7 @@
                             <constraint firstItem="kMF-S8-g0d" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" constant="1" id="VUE-OZ-OnB"/>
                             <constraint firstItem="kMF-S8-g0d" firstAttribute="top" secondItem="x3c-xb-pyz" secondAttribute="bottom" constant="1" id="XwU-si-zV1"/>
                             <constraint firstItem="b2o-F4-zpY" firstAttribute="centerX" secondItem="x3c-xb-pyz" secondAttribute="centerX" id="fC7-kU-dUq"/>
+                            <constraint firstItem="v6J-Da-6dM" firstAttribute="centerY" secondItem="tTr-VO-HJQ" secondAttribute="centerY" id="wGC-7N-MxY"/>
                             <constraint firstItem="tTr-VO-HJQ" firstAttribute="bottom" secondItem="54E-xT-2Dh" secondAttribute="bottom" id="xiK-lw-kos"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="tTr-VO-HJQ"/>
@@ -160,6 +168,7 @@
                         <outlet property="imageView" destination="x3c-xb-pyz" id="L94-qK-zTA"/>
                         <outlet property="imageViewHeight" destination="Xgp-eD-l1m" id="C0H-R1-0fw"/>
                         <outlet property="imageViewSpinner" destination="b2o-F4-zpY" id="Yyw-8n-Yj9"/>
+                        <outlet property="pinHasNoImagesLabel" destination="v6J-Da-6dM" id="O3Z-yg-YKw"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Vm4-8Z-ur6" userLabel="First Responder" sceneMemberID="firstResponder"/>

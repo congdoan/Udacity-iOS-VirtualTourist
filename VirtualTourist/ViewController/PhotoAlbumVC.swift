@@ -29,7 +29,8 @@ class PhotoAlbumVC: UIViewController {
     @IBOutlet weak var button: UIButton!
     @IBOutlet weak var buttonHeightConstraint: NSLayoutConstraint!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
-
+    @IBOutlet weak var pinHasNoImagesLabel: UILabel!
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,21 +47,27 @@ class PhotoAlbumVC: UIViewController {
             collectionView.reloadData()
         } else {
             if fetchedImageUrlsOfPage != nil {
-                updateCollectionView()
+                updateUIViews()
             } else {
                 downloadFirstPageOfImageUrls()
             }
         }
     }
     
-    private func updateCollectionView() {
-        let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrlsOfPage.count)
-        print("updateCollectionView() from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrlsOfPage.count)")
-        imageUrlsOfAlbum = Array(fetchedImageUrlsOfPage[from..<to])
-        selectedItems = Array(repeating: false, count: to - from)
-        fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
-        DispatchQueue.main.async {
-            self.collectionView.reloadData()
+    private func updateUIViews() {
+        if fetchedImageUrlsOfPage.count > 0 {
+            let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrlsOfPage.count)
+            print("updateCollectionView() from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrlsOfPage.count)")
+            imageUrlsOfAlbum = Array(fetchedImageUrlsOfPage[from..<to])
+            selectedItems = Array(repeating: false, count: to - from)
+            fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
+            DispatchQueue.main.async {
+                self.collectionView.reloadData()
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.pinHasNoImagesLabel.isHidden = false
+            }
         }
     }
     
@@ -75,7 +82,7 @@ class PhotoAlbumVC: UIViewController {
             
             self.fetchedImageUrlsOfPage = imageUrls as! [String]
             self.totalOfPages = totalOfPages
-            self.updateCollectionView()
+            self.updateUIViews()
         }
     }
     
@@ -343,7 +350,7 @@ extension PhotoAlbumVC: FirstPageDownloadObserver {
         
         self.fetchedImageUrlsOfPage = imageUrls
         self.totalOfPages = totalOfPages
-        self.updateCollectionView()
+        self.updateUIViews()
     }
     
 }
