@@ -26,6 +26,7 @@ class PhotoAlbumVC: UIViewController {
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
     @IBOutlet weak var imageViewHeight: NSLayoutConstraint!
     @IBOutlet weak var collectionView: UICollectionView!
+    @IBOutlet weak var collectionViewSpinner: UIActivityIndicatorView!
     @IBOutlet weak var button: UIButton!
     @IBOutlet weak var buttonHeightConstraint: NSLayoutConstraint!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
@@ -72,18 +73,35 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func downloadFirstPageOfImageUrls() {
+        updateUIBasedOnDownloadStatus(true)
+
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
-            if let error = error {
-                //TODO Handle the Download Error
-                print("Error Downloading First Page of Image URLs: \(error)")
-                return
+            
+            DispatchQueue.main.async {
+                self.updateUIBasedOnDownloadStatus(false)
             }
             
-            self.fetchedImageUrlsOfPage = imageUrls as! [String]
-            self.totalOfPages = totalOfPages
-            self.updateUIViews()
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.showAlert(message: "Error while downloading images.")
+                }
+                print("Error Downloading First Page of Image URLs: \(error)")
+            } else {
+                self.fetchedImageUrlsOfPage = imageUrls as! [String]
+                self.totalOfPages = totalOfPages
+                self.updateUIViews()
+            }
         }
+    }
+    
+    private func updateUIBasedOnDownloadStatus(_ downloading: Bool) {
+        if downloading {
+            collectionViewSpinner.startAnimating()
+        } else {
+            collectionViewSpinner.stopAnimating()
+        }
+        self.button.isEnabled = !downloading
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -128,7 +146,7 @@ class PhotoAlbumVC: UIViewController {
         }
         
         if albumNumberInPage * albumSize >= fetchedImageUrls.count && pageNumber >= totalOfPages {
-            showAlertNoMorePhotos()
+            showAlert(message: "There is no more images for this pin.")
             return
         }
         
@@ -142,18 +160,26 @@ class PhotoAlbumVC: UIViewController {
         
         /* Pre-fetch Next Page of Image URLs */
         if to == fetchedImageUrls.count && pageNumber < totalOfPages {
+            button.isEnabled = false
+            
             albumNumberInPage = 0
             pageNumber += 1
             let pinCoordinate = pinView.annotation!.coordinate
             FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
-                if let error = error {
-                    //TODO Handle the Download Error
-                    print("Error Downloading \(self.pageNumber)-th Page of Image URLs: \(error)")
-                    return
-                }
                 
-                self.fetchedImageUrlsOfPage = imageUrls as! [String]
-                self.totalOfPages = totalOfPages
+                DispatchQueue.main.async {
+                    self.button.isEnabled = true
+                }
+
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self.showAlert(message: "Error while downloading images.")
+                    }
+                    print("Error Downloading \(self.pageNumber)-th Page of Image URLs: \(error)")
+                } else {
+                    self.fetchedImageUrlsOfPage = imageUrls as! [String]
+                    self.totalOfPages = totalOfPages
+                }
             }
         }
     }
@@ -187,8 +213,8 @@ class PhotoAlbumVC: UIViewController {
         button.setTitle("New Collection", for: .normal)
     }
     
-    private func showAlertNoMorePhotos() {
-        let alert = UIAlertController(title: nil, message: "There is No more images.", preferredStyle: .alert)
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         let action = UIAlertAction(title: "OK", style: .default) { (_) in
             alert.dismiss(animated: true, completion: nil)
         }
@@ -288,22 +314,27 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
                 cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
             } else {
                 /* Fetch the image data from Flickr URL & Populate the cell */
-                let url = URL(string: imageUrlsOfAlbum[indexPath.item])!
                 cell.spinner.startAnimating()
-                cell.alpha = selectedItems[indexPath.item] ? 0.3 : 0.5
+                //cell.alpha = selectedItems[indexPath.item] ? 0.3 : 0.5
+                cell.alpha = 0.5
                 cell.imageView.image = nil
                 cell.layer.cornerRadius = 10
-                DispatchQueue.global(qos: .userInteractive).async {
-                    let data = try? Data(contentsOf: url)
-                    if let data = data {
-                        self.fetchedImagesOfAlbum[indexPath.item] = UIImage(data: data)
-                    }
+                
+                let urlString = imageUrlsOfAlbum[indexPath.item]
+                DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+                    let data = try? Data(contentsOf: URL(string: urlString)!)
+                    
                     DispatchQueue.main.async {
-                        cell.spinner.stopAnimating()
-                        cell.alpha = self.selectedItems[indexPath.item] ? 0.3 : 1.0
-                        cell.layer.cornerRadius = 0
-                        if let image = self.fetchedImagesOfAlbum[indexPath.item] {
-                            cell.imageView.image = image
+                        if let data = data, let imageUrlStrings = self?.imageUrlsOfAlbum {
+                            if indexPath.item < imageUrlStrings.count && urlString == imageUrlStrings[indexPath.item] {
+                                cell.spinner.stopAnimating()
+                                //cell.alpha = self.selectedItems[indexPath.item] ? 0.3 : 1.0
+                                cell.alpha = 1.0
+                                cell.layer.cornerRadius = 0
+                                let image = UIImage(data: data)
+                                cell.imageView.image = image
+                                self?.fetchedImagesOfAlbum[indexPath.item] = image
+                            }
                         }
                     }
                 }
@@ -321,7 +352,7 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
 extension PhotoAlbumVC: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if imageUrlsOfAlbum.count == 0 || fetchedImagesOfAlbum[indexPath.item] != nil {
+        if button.isEnabled && (imageUrlsOfAlbum.count == 0 || fetchedImagesOfAlbum[indexPath.item] != nil) {
             selectedItems[indexPath.item] = !selectedItems[indexPath.item]
             if selectedItems[indexPath.item] {
                 collectionView.cellForItem(at: indexPath)!.alpha = 0.3
@@ -339,9 +370,6 @@ extension PhotoAlbumVC: UICollectionViewDelegate {
 extension PhotoAlbumVC: FirstPageDownloadObserver {
     
     func resultOfFirstPageDownload(imageUrls: [String]?, totalOfPages: Int?, error: Error?) {
-        //DEBUG
-        print("resultOfFirstPageDownload imageUrls:\(imageUrls), totalOfPages:\(totalOfPages), error:\(error)")
-        
         if let error = error {
             //TODO Handle the Download Error
             print("Error Downloading First Page of Image URLs: \(error)")

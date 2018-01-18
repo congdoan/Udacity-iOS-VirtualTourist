@@ -115,14 +115,14 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
         photoAlbumVC.pinView = view
         let annotation = view.annotation as! MKPointAnnotation
         photoAlbumVC.pin = annotationToPinDict[annotation]
-        if let fetchedResult = annotationToResultOfFirstPageDownloadDict.removeValue(forKey: annotation) {
-            if let error = fetchedResult.error {
-                //TODO Handle the Download Error
+        if let downloadResult = annotationToResultOfFirstPageDownloadDict.removeValue(forKey: annotation) {
+            if let error = downloadResult.error {
+                // Handle the Download Error
                 print("Error Downloading First Page of Image URLs: \(error)")
-                return
+            } else {
+                photoAlbumVC.fetchedImageUrlsOfPage = downloadResult.imageUrls
+                photoAlbumVC.totalOfPages = downloadResult.totalOfPages
             }
-            photoAlbumVC.fetchedImageUrlsOfPage = fetchedResult.imageUrls
-            photoAlbumVC.totalOfPages = fetchedResult.totalOfPages
         } else {
             addFirstPageDownloadObserver(photoAlbumVC, forAnnotation: annotation)
         }

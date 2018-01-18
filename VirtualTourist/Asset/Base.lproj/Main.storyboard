@@ -134,6 +134,10 @@
                                     <outlet property="delegate" destination="ddf-rH-uYN" id="6DA-Ii-zr8"/>
                                 </connections>
                             </collectionView>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="erC-dy-Fb8">
+                                <rect key="frame" x="169" y="445.66666666666669" width="37" height="37"/>
+                                <color key="color" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </activityIndicatorView>
                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="This pin has no images." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="v6J-Da-6dM">
                                 <rect key="frame" x="97.666666666666671" y="401" width="179.66666666666663" height="20.333333333333314"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -144,6 +148,7 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="54E-xT-2Dh" firstAttribute="top" secondItem="kMF-S8-g0d" secondAttribute="bottom" constant="1" id="4JY-ln-Eby"/>
+                            <constraint firstItem="erC-dy-Fb8" firstAttribute="centerY" secondItem="kMF-S8-g0d" secondAttribute="centerY" id="5T2-zd-aLD"/>
                             <constraint firstItem="54E-xT-2Dh" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" id="8Bg-4c-det"/>
                             <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="x3c-xb-pyz" secondAttribute="trailing" id="CDY-Cs-Gx6"/>
                             <constraint firstItem="v6J-Da-6dM" firstAttribute="centerX" secondItem="tTr-VO-HJQ" secondAttribute="centerX" id="H5N-Km-y8P"/>
@@ -154,6 +159,7 @@
                             <constraint firstItem="tTr-VO-HJQ" firstAttribute="trailing" secondItem="kMF-S8-g0d" secondAttribute="trailing" constant="1" id="VCX-4q-CHe"/>
                             <constraint firstItem="kMF-S8-g0d" firstAttribute="leading" secondItem="tTr-VO-HJQ" secondAttribute="leading" constant="1" id="VUE-OZ-OnB"/>
                             <constraint firstItem="kMF-S8-g0d" firstAttribute="top" secondItem="x3c-xb-pyz" secondAttribute="bottom" constant="1" id="XwU-si-zV1"/>
+                            <constraint firstItem="erC-dy-Fb8" firstAttribute="centerX" secondItem="kMF-S8-g0d" secondAttribute="centerX" id="ahH-qC-jMO"/>
                             <constraint firstItem="b2o-F4-zpY" firstAttribute="centerX" secondItem="x3c-xb-pyz" secondAttribute="centerX" id="fC7-kU-dUq"/>
                             <constraint firstItem="v6J-Da-6dM" firstAttribute="centerY" secondItem="tTr-VO-HJQ" secondAttribute="centerY" id="wGC-7N-MxY"/>
                             <constraint firstItem="tTr-VO-HJQ" firstAttribute="bottom" secondItem="54E-xT-2Dh" secondAttribute="bottom" id="xiK-lw-kos"/>
@@ -164,6 +170,7 @@
                         <outlet property="button" destination="54E-xT-2Dh" id="2IE-EC-Lze"/>
                         <outlet property="buttonHeightConstraint" destination="vIl-0r-Kwj" id="ZKs-c1-aIc"/>
                         <outlet property="collectionView" destination="kMF-S8-g0d" id="qkS-6z-gWR"/>
+                        <outlet property="collectionViewSpinner" destination="erC-dy-Fb8" id="izs-bP-lMw"/>
                         <outlet property="flowLayout" destination="akG-qK-Es8" id="gw2-Kh-nel"/>
                         <outlet property="imageView" destination="x3c-xb-pyz" id="L94-qK-zTA"/>
                         <outlet property="imageViewHeight" destination="Xgp-eD-l1m" id="C0H-R1-0fw"/>
