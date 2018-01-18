@@ -29,44 +29,53 @@ class PhotoAlbumVC: UIViewController {
     @IBOutlet weak var button: UIButton!
     @IBOutlet weak var buttonHeightConstraint: NSLayoutConstraint!
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
-    
+
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUIBasedOnOrientation()
         
-        loadPinPhotos()
+        loadPhotos()
     }
     
-    private func loadPinPhotos() {
+    private func loadPhotos() {
         if let photos = pin.photos, photos.count > 0 {
             pinPhotos = Array(photos) as! [Photo]
             selectedItems = Array(repeating: false, count: pinPhotos.count)
             collectionView.reloadData()
         } else {
-            download1stPageOfImageUrlsForPinFromFlickr()
+            if fetchedImageUrlsOfPage != nil {
+                updateCollectionView()
+            } else {
+                downloadFirstPageOfImageUrls()
+            }
         }
     }
     
-    private func download1stPageOfImageUrlsForPinFromFlickr() {
+    private func updateCollectionView() {
+        let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrlsOfPage.count)
+        print("updateCollectionView() from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrlsOfPage.count)")
+        imageUrlsOfAlbum = Array(fetchedImageUrlsOfPage[from..<to])
+        selectedItems = Array(repeating: false, count: to - from)
+        fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
+        DispatchQueue.main.async {
+            self.collectionView.reloadData()
+        }
+    }
+    
+    private func downloadFirstPageOfImageUrls() {
         let pinCoordinate = pinView.annotation!.coordinate
         FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
-            if let fetchedImageUrls = imageUrls as? [String] {
-                self.fetchedImageUrlsOfPage = fetchedImageUrls
-                self.totalOfPages = totalOfPages
-                print("totalOfPages: \(totalOfPages!)")
-                let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrls.count)
-                print("from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrls.count)")
-                self.imageUrlsOfAlbum = Array(fetchedImageUrls[from..<to])
-                self.selectedItems = Array(repeating: false, count: to - from)
-                self.fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
-                DispatchQueue.main.async {
-                    self.collectionView.reloadData()
-                }
+            if let error = error {
+                //TODO Handle the Download Error
+                print("Error Downloading First Page of Image URLs: \(error)")
                 return
             }
             
-            //TODO display error
+            self.fetchedImageUrlsOfPage = imageUrls as! [String]
+            self.totalOfPages = totalOfPages
+            self.updateCollectionView()
         }
     }
     
@@ -107,7 +116,7 @@ class PhotoAlbumVC: UIViewController {
     
     private func displayNextAlbumOfPhotos() {
         guard let fetchedImageUrls = fetchedImageUrlsOfPage else {
-            download1stPageOfImageUrlsForPinFromFlickr()
+            downloadFirstPageOfImageUrls()
             return
         }
         
@@ -130,14 +139,14 @@ class PhotoAlbumVC: UIViewController {
             pageNumber += 1
             let pinCoordinate = pinView.annotation!.coordinate
             FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate, pageNumber: pageNumber, pageSize: pageSize) { (imageUrls, totalOfPages, error) in
-                if let imageUrls = imageUrls as? [String] {
-                    self.fetchedImageUrlsOfPage = imageUrls
-                    self.totalOfPages = totalOfPages
-                    print("totalOfPages: \(totalOfPages!)")
+                if let error = error {
+                    //TODO Handle the Download Error
+                    print("Error Downloading \(self.pageNumber)-th Page of Image URLs: \(error)")
                     return
                 }
                 
-                //TODO display error
+                self.fetchedImageUrlsOfPage = imageUrls as! [String]
+                self.totalOfPages = totalOfPages
             }
         }
     }
@@ -320,3 +329,21 @@ extension PhotoAlbumVC: UICollectionViewDelegate {
     
 }
 
+extension PhotoAlbumVC: FirstPageDownloadObserver {
+    
+    func resultOfFirstPageDownload(imageUrls: [String]?, totalOfPages: Int?, error: Error?) {
+        //DEBUG
+        print("resultOfFirstPageDownload imageUrls:\(imageUrls), totalOfPages:\(totalOfPages), error:\(error)")
+        
+        if let error = error {
+            //TODO Handle the Download Error
+            print("Error Downloading First Page of Image URLs: \(error)")
+            return
+        }
+        
+        self.fetchedImageUrlsOfPage = imageUrls
+        self.totalOfPages = totalOfPages
+        self.updateCollectionView()
+    }
+    
+}

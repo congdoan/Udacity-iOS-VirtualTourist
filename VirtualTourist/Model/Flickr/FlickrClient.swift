@@ -89,8 +89,8 @@ class  FlickrClient {
     
     // Fetch list of Image URL strings around the given coordinate
     func imageUrlsAroundCoordinate(_ coordinate: CLLocationCoordinate2D,
-                                   pageNumber: Int,
-                                   pageSize: Int,
+                                   pageNumber: Int = 1,
+                                   pageSize: Int = 96,
                                    completionHandler: @escaping (_ imageUrls: AnyObject?, _ totalOfPages: Int?, _ error: Error?) -> Void) {
         var methodParameters: [String: Any] = commonMethodParameters
         methodParameters[Constants.FlickrParameterKeys.Page] = pageNumber

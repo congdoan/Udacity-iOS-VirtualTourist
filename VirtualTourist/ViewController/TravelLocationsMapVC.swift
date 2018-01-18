@@ -15,9 +15,12 @@ import CoreData
 class TravelLocationsMapVC: UIViewController {
     
     var annotationToPinDict: [MKPointAnnotation : Pin]!
+    var annotationToResultOfFirstPageDownloadDict = [MKPointAnnotation : (imageUrls: [String]?, totalOfPages: Int?, error: Error?)]()
+    var annotationToFirstPageDownloadObserverDict = [MKPointAnnotation : FirstPageDownloadObserver]()
 
     @IBOutlet weak var mapView: MKMapView!
-    
+
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -26,24 +29,6 @@ class TravelLocationsMapVC: UIViewController {
         
         loadSavedPins()
     }
-    
-    @objc func addPinAtLongPressPointOnMap(sender: UILongPressGestureRecognizer) {
-        if sender.state != UIGestureRecognizerState.began {
-            return
-        }
-        let touchPoint = sender.location(in: mapView)
-        let touchCoordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView)
-        let annotation = MKPointAnnotation()
-        annotation.coordinate = touchCoordinate
-        mapView.addAnnotation(annotation)
-        let persistingContext = coreDataStack.persistingContext
-        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: persistingContext)
-        annotationToPinDict[annotation] = pin
-    }
-
-}
-
-extension TravelLocationsMapVC {
     
     func loadSavedPins() {
         annotationToPinDict = [MKPointAnnotation : Pin]()
@@ -61,6 +46,48 @@ extension TravelLocationsMapVC {
             }
         }
     }
+    
+    @objc func addPinAtLongPressPointOnMap(sender: UILongPressGestureRecognizer) {
+        if sender.state != UIGestureRecognizerState.began {
+            return
+        }
+        let touchPoint = sender.location(in: mapView)
+        let touchCoordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView)
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = touchCoordinate
+        mapView.addAnnotation(annotation)
+        let persistingContext = coreDataStack.persistingContext
+        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: persistingContext)
+        annotationToPinDict[annotation] = pin
+        
+        // Start downloading the images immediately without waiting for the user to navigate to the collection view.
+        downloadFirstPageOfImageUrlsForAnnotation(annotation)
+    }
+
+    private func downloadFirstPageOfImageUrlsForAnnotation(_ annotation: MKPointAnnotation) {
+        FlickrClient.shared.imageUrlsAroundCoordinate(annotation.coordinate) { (imageUrls, totalOfPages, error) in
+            if let observer = self.annotationToFirstPageDownloadObserverDict[annotation] {
+                observer.resultOfFirstPageDownload(imageUrls: imageUrls as! [String]?, totalOfPages: totalOfPages, error: error)
+                self.removeFirstPageDownloadObserver(forAnnotation: annotation)
+            } else {
+                self.annotationToResultOfFirstPageDownloadDict[annotation] = (imageUrls as! [String]?, totalOfPages, error)
+            }
+        }
+    }
+    
+    private func addFirstPageDownloadObserver(_ observer: FirstPageDownloadObserver, forAnnotation annotation: MKPointAnnotation) {
+        annotationToFirstPageDownloadObserverDict[annotation] = observer
+    }
+    
+    private func removeFirstPageDownloadObserver(forAnnotation annotation: MKPointAnnotation) {
+        annotationToFirstPageDownloadObserverDict.removeValue(forKey: annotation)
+    }
+    
+}
+
+protocol FirstPageDownloadObserver {
+    
+    func resultOfFirstPageDownload(imageUrls: [String]?, totalOfPages: Int?, error: Error?)
     
 }
 
@@ -86,7 +113,19 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
         photoAlbumVC.pinView = view
-        photoAlbumVC.pin = annotationToPinDict[view.annotation as! MKPointAnnotation]
+        let annotation = view.annotation as! MKPointAnnotation
+        photoAlbumVC.pin = annotationToPinDict[annotation]
+        if let fetchedResult = annotationToResultOfFirstPageDownloadDict.removeValue(forKey: annotation) {
+            if let error = fetchedResult.error {
+                //TODO Handle the Download Error
+                print("Error Downloading First Page of Image URLs: \(error)")
+                return
+            }
+            photoAlbumVC.fetchedImageUrlsOfPage = fetchedResult.imageUrls
+            photoAlbumVC.totalOfPages = fetchedResult.totalOfPages
+        } else {
+            addFirstPageDownloadObserver(photoAlbumVC, forAnnotation: annotation)
+        }
         navigationController!.pushViewController(photoAlbumVC, animated: true)
     }
     

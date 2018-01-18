@@ -88,8 +88,8 @@
 		F4BB97EC2007033600499778 /* ViewController */ = {
 			isa = PBXGroup;
 			children = (
-				F4988270200753ED006D59B5 /* PhotoAlbumVC.swift */,
 				F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */,
+				F4988270200753ED006D59B5 /* PhotoAlbumVC.swift */,
 				F4BFB8F92008EF0600ABC1FE /* PhotoAlbumCell.swift */,
 				F454CDFE200EFBA5001AFFC6 /* ViewController+extentions.swift */,
 			);
