@@ -13,10 +13,10 @@ import CoreData
 // MARK: - TravelLocationsMapVC: UIViewController
 
 class TravelLocationsMapVC: UIViewController {
-    
+
     var annotationToPinDict: [MKPointAnnotation : Pin]!
     var annotationToResultOfFirstPageDownloadDict = [MKPointAnnotation : (imageUrls: [String]?, totalOfPages: Int?, error: Error?)]()
-    var annotationToFirstPageDownloadObserverDict = [MKPointAnnotation : FirstPageDownloadObserver]()
+    var annotationToFirstPageDownloadObserverDict = [MKPointAnnotation : WeakRefFirstPageDownloadObserver]()
 
     @IBOutlet weak var mapView: MKMapView!
 
@@ -65,17 +65,17 @@ class TravelLocationsMapVC: UIViewController {
     }
 
     private func downloadFirstPageOfImageUrlsForAnnotation(_ annotation: MKPointAnnotation) {
-        FlickrClient.shared.imageUrlsAroundCoordinate(annotation.coordinate) { (imageUrls, totalOfPages, error) in
-            if let observer = self.annotationToFirstPageDownloadObserverDict[annotation] {
-                observer.resultOfFirstPageDownload(imageUrls: imageUrls as! [String]?, totalOfPages: totalOfPages, error: error)
-                self.removeFirstPageDownloadObserver(forAnnotation: annotation)
+        FlickrClient.shared.imageUrlsAroundCoordinate(annotation.coordinate) { [weak self] (imageUrls, totalOfPages, error) in
+            if let observer = self?.annotationToFirstPageDownloadObserverDict[annotation] {
+                observer.value?.resultOfFirstPageDownload(imageUrls: imageUrls as! [String]?, totalOfPages: totalOfPages, error: error)
+                self?.removeFirstPageDownloadObserver(forAnnotation: annotation)
             } else {
-                self.annotationToResultOfFirstPageDownloadDict[annotation] = (imageUrls as! [String]?, totalOfPages, error)
+                self?.annotationToResultOfFirstPageDownloadDict[annotation] = (imageUrls as! [String]?, totalOfPages, error)
             }
         }
     }
     
-    private func addFirstPageDownloadObserver(_ observer: FirstPageDownloadObserver, forAnnotation annotation: MKPointAnnotation) {
+    private func addFirstPageDownloadObserver(_ observer: WeakRefFirstPageDownloadObserver, forAnnotation annotation: MKPointAnnotation) {
         annotationToFirstPageDownloadObserverDict[annotation] = observer
     }
     
@@ -85,11 +85,23 @@ class TravelLocationsMapVC: UIViewController {
     
 }
 
-protocol FirstPageDownloadObserver {
+
+protocol FirstPageDownloadObserver: NSObjectProtocol {
     
     func resultOfFirstPageDownload(imageUrls: [String]?, totalOfPages: Int?, error: Error?)
     
 }
+
+class WeakRefFirstPageDownloadObserver {
+    
+    private(set) weak var value: FirstPageDownloadObserver?
+    
+    init(value: FirstPageDownloadObserver?) {
+        self.value = value
+    }
+    
+}
+
 
 // MARK: - TravelLocationsMapVC: MKMapViewDelegate
 
@@ -120,11 +132,11 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
                 // Handle the Download Error
                 print("Error Downloading First Page of Image URLs: \(error)")
             } else {
-                photoAlbumVC.fetchedImageUrlsOfPage = downloadResult.imageUrls
-                photoAlbumVC.totalOfPages = downloadResult.totalOfPages
+                photoAlbumVC.storeDownloadResult(imageUrls: downloadResult.imageUrls!, totalOfPages: downloadResult.totalOfPages!)
             }
         } else {
-            addFirstPageDownloadObserver(photoAlbumVC, forAnnotation: annotation)
+            let weakRefPhotoAlbumVC = WeakRefFirstPageDownloadObserver(value: photoAlbumVC)
+            addFirstPageDownloadObserver(weakRefPhotoAlbumVC, forAnnotation: annotation)
         }
         navigationController!.pushViewController(photoAlbumVC, animated: true)
     }

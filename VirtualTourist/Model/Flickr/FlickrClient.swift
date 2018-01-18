@@ -97,7 +97,6 @@ class  FlickrClient {
         methodParameters[Constants.FlickrParameterKeys.PerPage] = pageSize
         methodParameters[Constants.FlickrParameterKeys.BoundingBox] = bboxStringFromCoordinate(coordinate)
         let request = URLRequest(url: flickrURLFromParameters(methodParameters))
-        print("REQUEST: \(request.url!)")
         startTaskForRequest(request) { (resultDictionary, totalOfPages, error) in
             let domain = "FlickrClient.imagesAroundCoordinate"
             if let error = error {
