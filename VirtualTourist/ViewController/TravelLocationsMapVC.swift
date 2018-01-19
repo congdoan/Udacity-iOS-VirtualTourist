@@ -57,8 +57,9 @@ class TravelLocationsMapVC: UIViewController {
         let annotation = MKPointAnnotation()
         annotation.coordinate = touchCoordinate
         mapView.addAnnotation(annotation)
-        let persistingContext = coreDataStack.persistingContext
-        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: persistingContext)
+        let coreDataStack = self.coreDataStack
+        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: coreDataStack.persistingContext)
+        coreDataStack.saveAsync()
         annotationToPinDict[annotation] = pin
         
         // Start downloading the images immediately without waiting for the user to navigate to the collection view.

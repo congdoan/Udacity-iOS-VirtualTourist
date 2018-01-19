@@ -74,6 +74,7 @@ extension CoreDataStack {
     func performBackgroundBatchOperation(_ batch: @escaping Batch) {
         persistingContext.perform {
             batch(self.persistingContext)
+            self.saveAsync()
         }
     }
     
