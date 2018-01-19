@@ -29,6 +29,39 @@ class TravelLocationsMapVC: UIViewController {
         mapView.addGestureRecognizer(touchAndHoldGesture)
         
         loadSavedPins()
+        
+        restoreMapRegion()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        // Persist the center & zoom level of the map (i.e. the current region of the map)
+        saveMapRegion()
+    }
+    
+    private func saveMapRegion() {
+        let region = mapView.region
+        let userDefaults = UserDefaults.standard
+        userDefaults.set(true, forKey: "region")
+        userDefaults.set(region.center.latitude, forKey: "region.center.latitude")
+        userDefaults.set(region.center.longitude, forKey: "region.center.longitude")
+        userDefaults.set(region.span.latitudeDelta, forKey: "region.span.latitudeDelta")
+        userDefaults.set(region.span.longitudeDelta, forKey: "region.span.longitudeDelta")
+    }
+    
+    private func restoreMapRegion() {
+        let userDefaults = UserDefaults.standard
+        if userDefaults.bool(forKey: "region") {
+            let latitude = userDefaults.double(forKey: "region.center.latitude")
+            let longitude = userDefaults.double(forKey: "region.center.longitude")
+            let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            let latitudeDelta = userDefaults.double(forKey: "region.span.latitudeDelta")
+            let longitudeDelta = userDefaults.double(forKey: "region.span.longitudeDelta")
+            let span = MKCoordinateSpan(latitudeDelta: latitudeDelta, longitudeDelta: longitudeDelta)
+            let region = MKCoordinateRegion(center: center, span: span)
+            mapView.setRegion(region, animated: true)
+        }
     }
     
     func loadSavedPins() {
