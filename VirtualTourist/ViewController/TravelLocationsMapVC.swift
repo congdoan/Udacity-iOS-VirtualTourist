@@ -66,7 +66,9 @@ class TravelLocationsMapVC: UIViewController {
     
     func loadSavedPins() {
         annotationToPinDict = [MKPointAnnotation : Pin]()
-        coreDataStack.fetchPinsAsync { (pins) in
+        let startTime = Date()
+        coreDataStack.fetchPins { (pins) in
+            print("coreDataStack.fetchPins # of pins: \(pins.count)")
             guard pins.count > 0 else { return }
             var annotations = [MKAnnotation]()
             for pin in pins {
@@ -79,6 +81,8 @@ class TravelLocationsMapVC: UIViewController {
                 self.mapView.addAnnotations(annotations)
             }
         }
+        let finishTime = Date()
+        print("Miliseconds to fetchPins : \(finishTime.timeIntervalSince(startTime) * 1000)")
     }
     
     @objc func addPinAtLongPressPointOnMap(sender: UILongPressGestureRecognizer) {
@@ -90,23 +94,24 @@ class TravelLocationsMapVC: UIViewController {
         let annotation = MKPointAnnotation()
         annotation.coordinate = touchCoordinate
         mapView.addAnnotation(annotation)
-        let coreDataStack = self.coreDataStack
-        let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: coreDataStack.persistingContext)
-        coreDataStack.saveAsync()
-        annotationToPinDict[annotation] = pin
-        
-        // Start downloading the images immediately without waiting for the user to navigate to the collection view.
-        annotationsDownloadInProgress.insert(annotation)
-        downloadFirstPageOfImageUrlsForAnnotation(annotation)
+        coreDataStack.performOperation { (mainContext) in
+            let pin = Pin(latitude: touchCoordinate.latitude, longitude: touchCoordinate.longitude, context: mainContext)
+            self.annotationToPinDict[annotation] = pin
+
+            // Start downloading the images immediately without waiting for the user to navigate to the collection view.
+            self.annotationsDownloadInProgress.insert(annotation)
+            self.downloadFirstPageOfImageUrlsForAnnotation(annotation)
+        }
     }
 
     private func downloadFirstPageOfImageUrlsForAnnotation(_ annotation: MKPointAnnotation) {
         FlickrClient.shared.imageUrlsAroundCoordinate(annotation.coordinate) { [weak self] (imageUrls, totalOfPages, error) in
-            if let observer = self?.annotationToFirstPageDownloadObserverDict[annotation] {
+            guard let this = self else { return }
+            if let observer = this.annotationToFirstPageDownloadObserverDict[annotation] {
                 observer.value?.notifyObserverOfDownloadResult( (imageUrls as! [String]?, totalOfPages, error) )
-                self?.removeFirstPageDownloadObserver(forAnnotation: annotation)
+                this.removeFirstPageDownloadObserver(forAnnotation: annotation)
             } else {
-                self?.annotationToFirstPageDownloadResultDict[annotation] = (imageUrls as! [String]?, totalOfPages, error)
+                this.annotationToFirstPageDownloadResultDict[annotation] = (imageUrls as! [String]?, totalOfPages, error)
             }
         }
     }
@@ -161,10 +166,11 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
-        photoAlbumVC.pinView = view
         let annotation = view.annotation as! MKPointAnnotation
         let pin = annotationToPinDict[annotation]!
+        let startTime = Date()
+        let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
+        photoAlbumVC.pinView = view
         let pinPhotos = Array(pin.photos!) as! [Photo]
         photoAlbumVC.pin = pin
         photoAlbumVC.pinPhotos = pinPhotos
@@ -183,6 +189,9 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
             }
         }
         navigationController!.pushViewController(photoAlbumVC, animated: true)
+        let finishTime = Date()
+        let operationDuration = finishTime.timeIntervalSince(startTime) * 1000
+        print("Miliseconds to LOAD the Pin's Photos : \(operationDuration)")
     }
     
 }

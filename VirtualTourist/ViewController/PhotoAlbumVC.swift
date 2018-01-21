@@ -84,11 +84,12 @@ class PhotoAlbumVC: UIViewController {
                     if error != nil {
                         this.showAlert(message: "Error while downloading images.")
                     } else {
-                        let persistingContext = this.coreDataStack.persistingContext
-                        for photo in this.pinPhotos {
-                            persistingContext.delete(photo)
+                        this.coreDataStack.performOperation { (mainContext) in
+                            for photo in this.pinPhotos {
+                                mainContext.delete(photo)
+                            }
+                            this.pinPhotos = [Photo]()
                         }
-                        this.pinPhotos = [Photo]()
                         
                         this.updateUIViews()
                     }
@@ -110,15 +111,19 @@ class PhotoAlbumVC: UIViewController {
         super.viewWillDisappear(true)
         
         if let fetchedImagesOfAlbum = fetchedImagesOfAlbum {
-            /* Save the Pin and its Photos */
-            coreDataStack.performBackgroundBatchOperation({ (persistingContext) in
+            /* Save the Pin's Photos */
+            let startTime = Date()
+            coreDataStack.performOperation({ (mainContext) in
                 for uiImage in fetchedImagesOfAlbum {
                     if let uiImage = uiImage {
                         let data = UIImagePNGRepresentation(uiImage)!
-                        let _ = Photo(data: data, pin: self.pin, context: persistingContext)
+                        let _ = Photo(data: data, pin: self.pin, context: mainContext)
                     }
                 }
             })
+            let finishTime = Date()
+            let operationDuration = finishTime.timeIntervalSince(startTime) * 1000
+            print("Miliseconds to SAVE the Pin's Photos : \(operationDuration)")
         }
     }
     
@@ -137,6 +142,11 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func displayNextAlbumOfPhotos() {
+        if pinPhotos.count > 0 {
+            downloadFirstPageOfImageUrls()
+            return
+        }
+        
         let fetchedImageUrls = pageDownloadResult.imageUrls!, totalOfPages = pageDownloadResult.totalOfPages!
         if albumNumberInPage * albumSize >= fetchedImageUrls.count && pageNumber >= totalOfPages {
             showAlert(message: "There is no more images for this pin.")
@@ -194,14 +204,20 @@ class PhotoAlbumVC: UIViewController {
             fetchedImagesOfAlbum = unselectedImages
             selectedItems = Array(repeating: false, count: imageUrlsOfAlbum.count)
         } else {
-            let persistingContext = coreDataStack.persistingContext
+            var deletingPinPhotos = [Photo](), remainingPinPhotos = [Photo]()
             for i in 0..<selectedItems.count {
                 if selectedItems[i] {
-                    pin.removeFromPhotos(pinPhotos[i])
-                    persistingContext.delete(pinPhotos[i])
+                    deletingPinPhotos.append(pinPhotos[i])
+                } else {
+                    remainingPinPhotos.append(pinPhotos[i])
                 }
             }
-            pinPhotos = Array(pin.photos!) as! [Photo]
+            coreDataStack.performOperation { (mainContext) in
+                for photo in deletingPinPhotos {
+                    mainContext.delete(photo)
+                }
+            }
+            pinPhotos = remainingPinPhotos
             selectedItems = Array(repeating: false, count: pinPhotos.count)
         }
         collectionView.reloadData()

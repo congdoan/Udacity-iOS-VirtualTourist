@@ -14,7 +14,8 @@ struct CoreDataStack {
     
     // MARK: Properties
     
-    internal let persistingContext: NSManagedObjectContext
+    private let context: NSManagedObjectContext
+    private let persistingContext: NSManagedObjectContext
     
     // MARK: Initializers
     
@@ -32,10 +33,13 @@ struct CoreDataStack {
         // Create the Store Coordinator
         let coordinator = NSPersistentStoreCoordinator(managedObjectModel: model)
         
-        // Create the Persisting Context and connect it to the Coordinator
+        // Create the Persisting Context and connect it to the Store Coordinator
         persistingContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
         persistingContext.persistentStoreCoordinator = coordinator
-        
+        // Create the Main Context and connect it to the Persisting Context
+        context = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
+        context.parent = persistingContext
+
         // Add a SQLite store located in the documents folder
         let fm = FileManager.default
         guard let docUrl = fm.urls(for: .documentDirectory, in: .userDomainMask).first else {
@@ -46,59 +50,59 @@ struct CoreDataStack {
         // Options for migration
         let options = [NSInferMappingModelAutomaticallyOption: true, NSMigratePersistentStoresAutomaticallyOption: true]
         
+        // Add Persistent Store
         do {
-            try addStoreCoordinator(coordinator,
-                                    storeType: NSSQLiteStoreType, configuration: nil,
-                                    storeURL: dbURL, options: options as [NSObject : AnyObject]?)
+            try coordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: dbURL, options: options)
         } catch {
             fatalError("Unable to add store at \(dbURL)")
         }
     }
     
-    // MARK: Utils
-    
-    func addStoreCoordinator(_ coordinator: NSPersistentStoreCoordinator,
-                             storeType: String, configuration: String?,
-                             storeURL: URL, options : [NSObject:AnyObject]?) throws {
-        try coordinator.addPersistentStore(ofType: storeType, configurationName: configuration, at: storeURL, options: options)
-    }
-
 }
 
 // MARK: - CoreDataStack (CoreData-related methods)
 
 extension CoreDataStack {
     
-    typealias Batch = (_ workerContext: NSManagedObjectContext) -> ()
-    
-    func performBackgroundBatchOperation(_ batch: @escaping Batch) {
-        persistingContext.perform {
-            batch(self.persistingContext)
-            self.saveAsync()
-        }
-    }
-    
-    func fetchPinsAsync(completionHandler: @escaping (_ pins: [Pin]) -> Void) {
-        persistingContext.perform {
+    func fetchPins(completionHandler: @escaping ([Pin]) -> Void) {
+        context.perform {
             do {
-                let pins = try self.persistingContext.fetch(Pin.request())
+                let pins = try self.context.fetch(Pin.request())
                 completionHandler(pins)
             } catch {
-                fatalError("Error Async-Fetching Pin objects: \(error)")
+                fatalError("Error while fetching Pin objects")
+            }
+        }
+    }
+    
+    typealias Operation = (_ context: NSManagedObjectContext) -> Void
+
+    func performOperation(_ operation: @escaping Operation) {
+        context.perform {
+            operation(self.context)
+
+            if self.context.hasChanges {
+                self.save()
             }
         }
     }
 
-    func saveAsync() {
-        if persistingContext.hasChanges {
-            persistingContext.perform() {
-                do {
-                    try self.persistingContext.save()
-                } catch {
-                    fatalError("Error while saving Persisting Context: \(error)")
-                }
+    private func save() {
+        do {
+            // Commit unsaved changes to the Persisting Context
+            try context.save()
+        } catch {
+            fatalError("Error while saving the Main Context")
+        }
+        
+        // Save unsaved changes to the Persistent Store on the Persisting Context's private queue
+        persistingContext.perform {
+            do {
+                try self.persistingContext.save()
+            } catch {
+                fatalError("Error while saving the Persisting Context")
             }
         }
     }
-
+    
 }
