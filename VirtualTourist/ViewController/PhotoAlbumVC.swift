@@ -13,14 +13,17 @@ class PhotoAlbumVC: UIViewController {
     
     var pin: Pin!
     var pinView: MKAnnotationView!
-    var pinPhotos = [Photo]()
+    var pinPhotos = [Photo]() // Photo objects in Core Data
     var pageDownloadResult: PageDownloadResult!
-    var imageUrlsOfAlbum = [String]()
+    var imageUrlsOfAlbum = [String]() // Remote Flickr Image URLs
+    var downloadedImageCount = 0, savedImageDataCount = 0, everVisibleItemMaxIndex = 0, imageDataEverSaved = false
     let albumSize = 24, pageSize = 4 * 24 // 1 page = 4 albums
     var albumNumberInPage = 1, pageNumber = 1
-    var fetchedImagesOfAlbum: [UIImage?]!
+    var downloadedImages = [UIImage?]()
+    var downloadedImageIndices = Set<Int>()
     var selectedItems: [Bool]!
     var selectedItemCount = 0
+    
     
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var imageViewSpinner: UIActivityIndicatorView!
@@ -41,7 +44,7 @@ class PhotoAlbumVC: UIViewController {
         if pinPhotos.count == 0 {
             if pageDownloadResult != nil {
                 // Download of First Page Finished
-                updateUIViews()
+                updateUIViewsUponNewImageUrls()
             } else {
                 // Download of First Page In Progress
                 updateUIBasedOnDownloadStatus(true)
@@ -51,14 +54,19 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
-    private func updateUIViews() {
+    private func updateUIViewsUponNewImageUrls() {
         let fetchedImageUrlsOfPage = pageDownloadResult.imageUrls!
         if fetchedImageUrlsOfPage.count > 0 {
             let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrlsOfPage.count)
             print("updateUIViews() from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrlsOfPage.count)")
             imageUrlsOfAlbum = Array(fetchedImageUrlsOfPage[from..<to])
+            downloadedImageCount = 0
+            savedImageDataCount = 0
+            everVisibleItemMaxIndex = 0
+            imageDataEverSaved = false
             selectedItems = Array(repeating: false, count: to - from)
-            fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
+            downloadedImages = Array(repeating: nil, count: to - from)
+            downloadedImageIndices = Set<Int>()
             collectionView.reloadData()
         } else {
             pinHasNoImagesLabel.isHidden = false
@@ -84,14 +92,7 @@ class PhotoAlbumVC: UIViewController {
                     if error != nil {
                         this.showAlert(message: "Error while downloading images.")
                     } else {
-                        this.coreDataStack.performOperation { (mainContext) in
-                            for photo in this.pinPhotos {
-                                mainContext.delete(photo)
-                            }
-                            this.pinPhotos = [Photo]()
-                        }
-                        
-                        this.updateUIViews()
+                        this.updateUIViewsUponNewImageUrls()
                     }
                 }
             }
@@ -107,26 +108,6 @@ class PhotoAlbumVC: UIViewController {
         self.button.isEnabled = !downloading
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(true)
-        
-        if let fetchedImagesOfAlbum = fetchedImagesOfAlbum {
-            /* Save the Pin's Photos */
-            let startTime = Date()
-            coreDataStack.performOperation({ (mainContext) in
-                for uiImage in fetchedImagesOfAlbum {
-                    if let uiImage = uiImage {
-                        let data = UIImagePNGRepresentation(uiImage)!
-                        let _ = Photo(data: data, pin: self.pin, context: mainContext)
-                    }
-                }
-            })
-            let finishTime = Date()
-            let operationDuration = finishTime.timeIntervalSince(startTime) * 1000
-            print("Miliseconds to SAVE the Pin's Photos : \(operationDuration)")
-        }
-    }
-    
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         //super.didRotate(from: fromInterfaceOrientation)
         
@@ -135,6 +116,10 @@ class PhotoAlbumVC: UIViewController {
     
     @IBAction func buttonPressed(_ sender: Any) {
         if selectedItemCount == 0 {
+            // Scroll the Collection View to the top
+            let firstIndexPath = IndexPath(item: 0, section: 0)
+            collectionView.scrollToItem(at: firstIndexPath, at: .top, animated: true)
+            
             displayNextAlbumOfPhotos()
         } else {
             removeSelectedPhotos()
@@ -142,7 +127,7 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func displayNextAlbumOfPhotos() {
-        if pinPhotos.count > 0 {
+        if imageUrlsOfAlbum.count == 0 {
             downloadFirstPageOfImageUrls()
             return
         }
@@ -157,8 +142,13 @@ class PhotoAlbumVC: UIViewController {
         let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, fetchedImageUrls.count)
         print("from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrls.count)")
         imageUrlsOfAlbum = Array(fetchedImageUrls[from..<to])
+        downloadedImageCount = 0
+        savedImageDataCount = 0
+        everVisibleItemMaxIndex = 0
+        imageDataEverSaved = false
         selectedItems = Array(repeating: false, count: to - from)
-        fetchedImagesOfAlbum = Array(repeating: nil, count: to - from)
+        downloadedImages = Array(repeating: nil, count: to - from)
+        downloadedImageIndices = Set<Int>()
         collectionView.reloadData()
         
         /* Pre-fetch Next Page of Image URLs */
@@ -194,14 +184,54 @@ class PhotoAlbumVC: UIViewController {
         if imageUrlsOfAlbum.count > 0 {
             var unselectedImageUrls = [String]()
             var unselectedImages = [UIImage?]()
+            
+            // Way 1:
             for i in 0..<selectedItems.count {
-                if !selectedItems[i] {
+                if selectedItems[i] {
+                    downloadedImageCount -= 1
+                    downloadedImageIndices.remove(i)
+                } else {
                     unselectedImageUrls.append(imageUrlsOfAlbum[i])
-                    unselectedImages.append(fetchedImagesOfAlbum[i])
+                    unselectedImages.append(downloadedImages[i])
                 }
             }
+            savedImageDataCount = 0
+            everVisibleItemMaxIndex = 0
+            imageDataEverSaved = false
+            /* Way 2:
+            var deletingPinPhotos = [Photo](), remainingPinPhotos = [Photo](), lastDeleteIndex = -1
+            for i in 0..<selectedItems.count {
+                if selectedItems[i] {
+                    downloadedImageDataCount -= 1
+                    if i < savedImageDataCount {
+                        savedImageDataCount -= 1
+                        deletingPinPhotos.append(pinPhotos[i])
+                        for j in lastDeleteIndex+1..<i {
+                            remainingPinPhotos.append(pinPhotos[j])
+                        }
+                        lastDeleteIndex = i
+                    }
+                } else {
+                    unselectedImageUrls.append(imageUrlsOfAlbum[i])
+                    unselectedImages.append(downloadedImagesOfAlbum[i])
+                }
+            }
+            if lastDeleteIndex > -1 {
+                for j in lastDeleteIndex+1..<pinPhotos.count {
+                    remainingPinPhotos.append(pinPhotos[j])
+                }
+                coreDataStack.performOperation { (mainContext) in
+                    for photo in deletingPinPhotos {
+                        mainContext.delete(photo)
+                    }
+                }
+                pinPhotos = remainingPinPhotos
+            }
+            everVisibleItemMaxIndex = 0
+            */
+
             imageUrlsOfAlbum = unselectedImageUrls
-            fetchedImagesOfAlbum = unselectedImages
+            downloadedImages = unselectedImages
             selectedItems = Array(repeating: false, count: imageUrlsOfAlbum.count)
         } else {
             var deletingPinPhotos = [Photo](), remainingPinPhotos = [Photo]()
@@ -321,7 +351,9 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCell", for: indexPath) as! PhotoAlbumCell
         
         if imageUrlsOfAlbum.count > 0 {
-            if let image = fetchedImagesOfAlbum[indexPath.item] {
+            everVisibleItemMaxIndex = max(everVisibleItemMaxIndex, indexPath.item)
+            
+            if let image = downloadedImages[indexPath.item] {
                 cell.imageView.image = image
                 cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
             } else {
@@ -336,14 +368,49 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
                     let data = try? Data(contentsOf: URL(string: urlString)!)
                     
                     DispatchQueue.main.async {
-                        if let data = data, let imageUrlStrings = self?.imageUrlsOfAlbum {
-                            if indexPath.item < imageUrlStrings.count && urlString == imageUrlStrings[indexPath.item] {
+                        guard let this = self else { return }
+                        if let data = data {
+                            if indexPath.item < this.imageUrlsOfAlbum.count && urlString == this.imageUrlsOfAlbum[indexPath.item] {
+                                if this.downloadedImageIndices.contains(indexPath.item) {
+                                    return
+                                }
+                                
                                 cell.spinner.stopAnimating()
                                 cell.alpha = 1.0
                                 cell.layer.cornerRadius = 0
                                 let image = UIImage(data: data)
                                 cell.imageView.image = image
-                                self?.fetchedImagesOfAlbum[indexPath.item] = image
+                                this.downloadedImages[indexPath.item] = image
+                                
+                                // Persist when all the Ever-Visible items have their image data downloaded from Flickr URLs
+                                this.downloadedImageCount += 1
+                                this.downloadedImageIndices.insert(indexPath.item)
+                                if this.downloadedImageCount == (this.everVisibleItemMaxIndex + 1) {
+                                    this.coreDataStack.performOperation { (mainContext) in
+                                        if !this.imageDataEverSaved && this.pinPhotos.count > 0 {
+                                            for photo in this.pinPhotos {
+                                                mainContext.delete(photo)
+                                            }
+                                            print("pinPhotos[0...\(this.pinPhotos.count-1)] is Being Deleted ...")
+                                            this.pinPhotos.removeAll()
+                                        }
+                                        for i in this.savedImageDataCount...this.everVisibleItemMaxIndex {
+                                            let uiImage = this.downloadedImages[i]!
+                                            let data = UIImagePNGRepresentation(uiImage)!
+                                            let photo = Photo(data: data, pin: this.pin, context: mainContext)
+                                            this.pinPhotos.append(photo)
+                                        }
+                                        print("downloadedImagesOfAlbum[\(this.savedImageDataCount)...\(this.everVisibleItemMaxIndex)] is Being Saved ...")
+                                        this.savedImageDataCount = this.everVisibleItemMaxIndex + 1
+                                        this.imageDataEverSaved = true
+                                        
+                                        if this.downloadedImageCount == this.imageUrlsOfAlbum.count {
+                                            this.imageUrlsOfAlbum.removeAll()
+                                            this.downloadedImages.removeAll()
+                                            this.downloadedImageIndices.removeAll()
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -362,7 +429,7 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
 extension PhotoAlbumVC: UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if button.isEnabled && (imageUrlsOfAlbum.count == 0 || fetchedImagesOfAlbum[indexPath.item] != nil) {
+        if button.isEnabled && (imageUrlsOfAlbum.count == 0 || downloadedImages[indexPath.item] != nil) {
             selectedItems[indexPath.item] = !selectedItems[indexPath.item]
             if selectedItems[indexPath.item] {
                 collectionView.cellForItem(at: indexPath)!.alpha = 0.3
@@ -387,7 +454,7 @@ extension PhotoAlbumVC: FirstPageDownloadObserver {
                 print("Error Downloading First Page of Image URLs: \(downloadError)")
                 self.showAlert(message: "Error while downloading images.")
             } else {
-                self.updateUIViews()
+                self.updateUIViewsUponNewImageUrls()
             }
         }
     }
