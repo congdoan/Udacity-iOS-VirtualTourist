@@ -54,6 +54,23 @@ class PhotoAlbumVC: UIViewController {
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if !imageDataEverSaved && downloadedImageCount > 0 {
+            coreDataStack.performOperation { (mainContext) in
+                for photo in self.pinPhotos {
+                    mainContext.delete(photo)
+                }
+                for uiImage in self.downloadedImages {
+                    if let uiImage = uiImage, let data = UIImagePNGRepresentation(uiImage) {
+                        let _ = Photo(data: data, pin: self.pin, context: mainContext)
+                    }
+                }
+            }
+        }
+    }
+    
     private func updateUIViewsUponNewImageUrls() {
         let fetchedImageUrlsOfPage = pageDownloadResult.imageUrls!
         if fetchedImageUrlsOfPage.count > 0 {
