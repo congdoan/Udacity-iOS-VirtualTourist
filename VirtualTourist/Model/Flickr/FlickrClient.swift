@@ -119,7 +119,7 @@ class  FlickrClient {
                 return
             }
             
-            /* Calculate the actual number of pages based total, max number of results per search, and perpage */
+            /* Calculate the actual number of pages based total and max number of results per search */
             guard let total = photosDictionary[Constants.FlickrResponseKeys.Total] as? String else {
                 self.sendError("Cannot find keys 'total' in \(photosDictionary)",
                                 domain, completionHandler)

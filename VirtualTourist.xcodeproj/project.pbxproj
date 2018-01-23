@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F454CDFF200EFBA5001AFFC6 /* ViewController+extentions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F454CDFE200EFBA5001AFFC6 /* ViewController+extentions.swift */; };
+		F48C1AF12016AB5900921970 /* ErrorMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48C1AF02016AB5900921970 /* ErrorMessages.swift */; };
 		F48CE0792006F22800B6F135 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48CE0782006F22800B6F135 /* AppDelegate.swift */; };
 		F48CE07E2006F22800B6F135 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F48CE07C2006F22800B6F135 /* Main.storyboard */; };
 		F48CE0802006F22800B6F135 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F48CE07F2006F22800B6F135 /* Assets.xcassets */; };
@@ -27,6 +28,7 @@
 
 /* Begin PBXFileReference section */
 		F454CDFE200EFBA5001AFFC6 /* ViewController+extentions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ViewController+extentions.swift"; sourceTree = "<group>"; };
+		F48C1AF02016AB5900921970 /* ErrorMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorMessages.swift; sourceTree = "<group>"; };
 		F48CE0752006F22800B6F135 /* VirtualTourist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualTourist.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F48CE0782006F22800B6F135 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F48CE07D2006F22800B6F135 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -90,6 +92,7 @@
 			children = (
 				F4BB97EF200703C500499778 /* TravelLocationsMapVC.swift */,
 				F4988270200753ED006D59B5 /* PhotoAlbumVC.swift */,
+				F48C1AF02016AB5900921970 /* ErrorMessages.swift */,
 				F4BFB8F92008EF0600ABC1FE /* PhotoAlbumCell.swift */,
 				F454CDFE200EFBA5001AFFC6 /* ViewController+extentions.swift */,
 			);
@@ -201,6 +204,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F48C1AF12016AB5900921970 /* ErrorMessages.swift in Sources */,
 				F4BCB189200CE89D00880EC7 /* Pin+CoreDataClass.swift in Sources */,
 				F4BCB18B200CE89D00880EC7 /* Photo+CoreDataClass.swift in Sources */,
 				F454CDFF200EFBA5001AFFC6 /* ViewController+extentions.swift in Sources */,

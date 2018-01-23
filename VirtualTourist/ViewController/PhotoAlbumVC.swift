@@ -107,7 +107,7 @@ class PhotoAlbumVC: UIViewController {
                     this.pageDownloadResult = (imageUrls as? [String], totalOfPages, error)
                     this.updateUIBasedOnDownloadStatus(false)
                     if error != nil {
-                        this.showAlert(message: "Error while downloading images.")
+                        this.showAlert(message: ErrorMessages.errorWhileDownloadingImages)
                     } else {
                         this.updateUIViewsUponNewImageUrls()
                     }
@@ -150,10 +150,6 @@ class PhotoAlbumVC: UIViewController {
         }
         
         let fetchedImageUrls = pageDownloadResult.imageUrls!, totalOfPages = pageDownloadResult.totalOfPages!
-        if albumNumberInPage * albumSize >= fetchedImageUrls.count && pageNumber >= totalOfPages {
-            showAlert(message: "There is no more images for this pin.")
-            return
-        }
         
         albumNumberInPage += 1
         let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, fetchedImageUrls.count)
@@ -168,12 +164,13 @@ class PhotoAlbumVC: UIViewController {
         downloadedImageIndices = Set<Int>()
         collectionView.reloadData()
         
-        /* Pre-fetch Next Page of Image URLs */
-        if to == fetchedImageUrls.count && pageNumber < totalOfPages {
+        /* Pre-fetch New Random Page of Image URLs */
+        if to == fetchedImageUrls.count {
             button.isEnabled = false
             
             albumNumberInPage = 0
-            pageNumber += 1
+            pageNumber = 1 + numericCast(arc4random_uniform(numericCast(totalOfPages)))
+            print("New Random Page: \(pageNumber)")
             let pageNumberForDebuggingInCaseOfError = pageNumber
             let pinCoordinate = pinView.annotation!.coordinate
             FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate,
@@ -188,8 +185,8 @@ class PhotoAlbumVC: UIViewController {
                     if let this = self {
                         this.pageDownloadResult = (imageUrls as? [String], totalOfPages, error)
                         this.button.isEnabled = true
-                        if error == nil {
-                            this.showAlert(message: "Error while downloading images.")
+                        if error != nil {
+                            this.showAlert(message: ErrorMessages.errorWhileDownloadingImages)
                         }
                     }
                 }
@@ -469,7 +466,7 @@ extension PhotoAlbumVC: FirstPageDownloadObserver {
             self.updateUIBasedOnDownloadStatus(false)
             if let downloadError = result.error {
                 print("Error Downloading First Page of Image URLs: \(downloadError)")
-                self.showAlert(message: "Error while downloading images.")
+                self.showAlert(message: ErrorMessages.errorWhileDownloadingImages)
             } else {
                 self.updateUIViewsUponNewImageUrls()
             }
