@@ -144,7 +144,7 @@ class PhotoAlbumVC: UIViewController {
     }
     
     private func displayNextAlbumOfPhotos() {
-        if imageUrlsOfAlbum.count == 0 {
+        if pageDownloadResult == nil {
             downloadFirstPageOfImageUrls()
             return
         }
@@ -364,78 +364,88 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCell", for: indexPath) as! PhotoAlbumCell
         
-        if imageUrlsOfAlbum.count > 0 {
-            everVisibleItemMaxIndex = max(everVisibleItemMaxIndex, indexPath.item)
-            
-            if let image = downloadedImages[indexPath.item] {
+        if imageUrlsOfAlbum.count == 0 {
+            cell.imageView.image = UIImage(data: pinPhotos[indexPath.item].data)
+            cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
+            return cell
+        }
+
+        everVisibleItemMaxIndex = max(everVisibleItemMaxIndex, indexPath.item)
+        
+        if let image = downloadedImages[indexPath.item] {
+            cell.imageView.image = image
+            cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
+            return cell
+        }
+        
+        /* Fetch the image data from Flickr URL & Populate the cell */
+        cell.spinner.startAnimating()
+        cell.alpha = 0.5
+        cell.imageView.image = nil
+        cell.layer.cornerRadius = 10
+        
+        let urlString = imageUrlsOfAlbum[indexPath.item]
+        self.downloadImage(imagePath: urlString) { [weak self] data, error in
+            DispatchQueue.main.async {
+                guard let this = self, let data = data else { return }
+                guard indexPath.item < this.imageUrlsOfAlbum.count,
+                    urlString == this.imageUrlsOfAlbum[indexPath.item],
+                    !this.downloadedImageIndices.contains(indexPath.item) else {
+                        return
+                }
+                cell.spinner.stopAnimating()
+                cell.alpha = 1.0
+                cell.layer.cornerRadius = 0
+                let image = UIImage(data: data)
                 cell.imageView.image = image
-                cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
-            } else {
-                /* Fetch the image data from Flickr URL & Populate the cell */
-                cell.spinner.startAnimating()
-                cell.alpha = 0.5
-                cell.imageView.image = nil
-                cell.layer.cornerRadius = 10
+                this.downloadedImages[indexPath.item] = image
                 
-                let urlString = imageUrlsOfAlbum[indexPath.item]
-                DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-                    let data = try? Data(contentsOf: URL(string: urlString)!)
-                    
-                    DispatchQueue.main.async {
-                        guard let this = self else { return }
-                        if let data = data {
-                            if indexPath.item < this.imageUrlsOfAlbum.count && urlString == this.imageUrlsOfAlbum[indexPath.item] {
-                                if this.downloadedImageIndices.contains(indexPath.item) {
-                                    return
-                                }
-                                
-                                cell.spinner.stopAnimating()
-                                cell.alpha = 1.0
-                                cell.layer.cornerRadius = 0
-                                let image = UIImage(data: data)
-                                cell.imageView.image = image
-                                this.downloadedImages[indexPath.item] = image
-                                
-                                // Persist when all the Ever-Visible items have their image data downloaded from Flickr URLs
-                                this.downloadedImageCount += 1
-                                this.downloadedImageIndices.insert(indexPath.item)
-                                if this.downloadedImageCount == (this.everVisibleItemMaxIndex + 1) {
-                                    this.coreDataStack.performOperation { (mainContext) in
-                                        if !this.imageDataEverSaved && this.pinPhotos.count > 0 {
-                                            for photo in this.pinPhotos {
-                                                mainContext.delete(photo)
-                                            }
-                                            print("pinPhotos[0...\(this.pinPhotos.count-1)] is Being Deleted ...")
-                                            this.pinPhotos.removeAll()
-                                        }
-                                        for i in this.savedImageDataCount...this.everVisibleItemMaxIndex {
-                                            let uiImage = this.downloadedImages[i]!
-                                            let data = UIImagePNGRepresentation(uiImage)!
-                                            let photo = Photo(data: data, pin: this.pin, context: mainContext)
-                                            this.pinPhotos.append(photo)
-                                        }
-                                        print("downloadedImagesOfAlbum[\(this.savedImageDataCount)...\(this.everVisibleItemMaxIndex)] is Being Saved ...")
-                                        this.savedImageDataCount = this.everVisibleItemMaxIndex + 1
-                                        this.imageDataEverSaved = true
-                                        
-                                        if this.downloadedImageCount == this.imageUrlsOfAlbum.count {
-                                            this.imageUrlsOfAlbum.removeAll()
-                                            this.downloadedImages.removeAll()
-                                            this.downloadedImageIndices.removeAll()
-                                        }
-                                    }
-                                }
+                // Persist when all the Ever-Visible items have their image data downloaded from Flickr URLs
+                this.downloadedImageCount += 1
+                this.downloadedImageIndices.insert(indexPath.item)
+                if this.downloadedImageCount == (this.everVisibleItemMaxIndex + 1) {
+                    this.coreDataStack.performOperation { (mainContext) in
+                        if !this.imageDataEverSaved && this.pinPhotos.count > 0 {
+                            for photo in this.pinPhotos {
+                                mainContext.delete(photo)
                             }
+                            print("pinPhotos[0...\(this.pinPhotos.count-1)] is Being Deleted ...")
+                            this.pinPhotos.removeAll()
+                        }
+                        for i in this.savedImageDataCount...this.everVisibleItemMaxIndex {
+                            let uiImage = this.downloadedImages[i]!
+                            let data = UIImagePNGRepresentation(uiImage)!
+                            let photo = Photo(data: data, pin: this.pin, context: mainContext)
+                            this.pinPhotos.append(photo)
+                        }
+                        print("downloadedImagesOfAlbum[\(this.savedImageDataCount)...\(this.everVisibleItemMaxIndex)] is Being Saved ...")
+                        this.savedImageDataCount = this.everVisibleItemMaxIndex + 1
+                        this.imageDataEverSaved = true
+                        
+                        if this.downloadedImageCount == this.imageUrlsOfAlbum.count {
+                            // All the images of album have been downloaded, and they are being saved to disk via Core Data
+                            // Now Clear imageUrlsOfAlbum so that removing photos after this point of time works
+                            this.imageUrlsOfAlbum.removeAll()
+                            this.downloadedImages.removeAll()
+                            this.downloadedImageIndices.removeAll()
                         }
                     }
                 }
             }
-        } else {
-            cell.imageView.image = UIImage(data: pinPhotos[indexPath.item].data)
-            cell.alpha = selectedItems[indexPath.item] ? 0.3 : 1.0
         }
-
         return cell
+    }
+    
+    private func downloadImage(imagePath:String, completionHandler: @escaping (_ imageData: Data?, _ errorString: String?) -> Void) {
+        let request = URLRequest(url: URL(string: imagePath)!)
+        let task = URLSession.shared.dataTask(with: request) { data, response, downloadError in
+            if downloadError != nil {
+                completionHandler(nil, "Could not download image \(imagePath)")
+            } else {
+                completionHandler(data, nil)
+            }
+        }
+        task.resume()
     }
     
 }
