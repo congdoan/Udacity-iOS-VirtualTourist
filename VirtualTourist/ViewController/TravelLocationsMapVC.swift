@@ -66,9 +66,7 @@ class TravelLocationsMapVC: UIViewController {
     
     func loadSavedPins() {
         annotationToPinDict = [MKPointAnnotation : Pin]()
-        let startTime = Date()
         coreDataStack.fetchPins { (pins) in
-            print("coreDataStack.fetchPins # of pins: \(pins.count)")
             guard pins.count > 0 else { return }
             var annotations = [MKAnnotation]()
             for pin in pins {
@@ -81,8 +79,6 @@ class TravelLocationsMapVC: UIViewController {
                 self.mapView.addAnnotations(annotations)
             }
         }
-        let finishTime = Date()
-        print("Miliseconds to fetchPins : \(finishTime.timeIntervalSince(startTime) * 1000)")
     }
     
     @objc func addPinAtLongPressPointOnMap(sender: UILongPressGestureRecognizer) {
@@ -168,7 +164,6 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         let annotation = view.annotation as! MKPointAnnotation
         let pin = annotationToPinDict[annotation]!
-        let startTime = Date()
         let photoAlbumVC = storyboard?.instantiateViewController(withIdentifier: "PhotoAlbumVC") as! PhotoAlbumVC
         photoAlbumVC.pinView = view
         let pinPhotos = Array(pin.photos!) as! [Photo]
@@ -189,9 +184,6 @@ extension TravelLocationsMapVC: MKMapViewDelegate {
             }
         }
         navigationController!.pushViewController(photoAlbumVC, animated: true)
-        let finishTime = Date()
-        let operationDuration = finishTime.timeIntervalSince(startTime) * 1000
-        print("Miliseconds to LOAD the Pin's Photos : \(operationDuration)")
     }
     
 }

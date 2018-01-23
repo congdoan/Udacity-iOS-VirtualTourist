@@ -125,11 +125,9 @@ class  FlickrClient {
                                 domain, completionHandler)
                 return
             }
-            print("photoArray.size=\(photoArray.count), total=\(total)")
             let maxNumberOfResultsPerSearch = 4100
             let actualNumberOfReturnedImages = min(Int(total)!, maxNumberOfResultsPerSearch)
             let actualNumberOfPages = (actualNumberOfReturnedImages / pageSize) + (actualNumberOfReturnedImages % pageSize != 0 ? 1 : 0)
-            print("actualNumberOfPages         : \(actualNumberOfPages)")
 
             /*
             let imageUrls = photoArray.map {(photoDictionary) in

@@ -75,7 +75,6 @@ class PhotoAlbumVC: UIViewController {
         let fetchedImageUrlsOfPage = pageDownloadResult.imageUrls!
         if fetchedImageUrlsOfPage.count > 0 {
             let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrlsOfPage.count)
-            print("updateUIViews() from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrlsOfPage.count)")
             imageUrlsOfAlbum = Array(fetchedImageUrlsOfPage[from..<to])
             downloadedImageCount = 0
             savedImageDataCount = 0
@@ -153,7 +152,6 @@ class PhotoAlbumVC: UIViewController {
         
         albumNumberInPage += 1
         let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, fetchedImageUrls.count)
-        print("from/to/fetchedImageUrls: \(from)/\(to)/\(fetchedImageUrls.count)")
         imageUrlsOfAlbum = Array(fetchedImageUrls[from..<to])
         downloadedImageCount = 0
         savedImageDataCount = 0
@@ -170,7 +168,6 @@ class PhotoAlbumVC: UIViewController {
             
             albumNumberInPage = 0
             pageNumber = 1 + numericCast(arc4random_uniform(numericCast(totalOfPages)))
-            print("New Random Page: \(pageNumber)")
             let pageNumberForDebuggingInCaseOfError = pageNumber
             let pinCoordinate = pinView.annotation!.coordinate
             FlickrClient.shared.imageUrlsAroundCoordinate(pinCoordinate,
@@ -404,22 +401,21 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
                 this.downloadedImageCount += 1
                 this.downloadedImageIndices.insert(indexPath.item)
                 if this.downloadedImageCount == (this.everVisibleItemMaxIndex + 1) {
+                    let capturedEverVisibleItemMaxIndex = this.everVisibleItemMaxIndex
                     this.coreDataStack.performOperation { (mainContext) in
                         if !this.imageDataEverSaved && this.pinPhotos.count > 0 {
                             for photo in this.pinPhotos {
                                 mainContext.delete(photo)
                             }
-                            print("pinPhotos[0...\(this.pinPhotos.count-1)] is Being Deleted ...")
                             this.pinPhotos.removeAll()
                         }
-                        for i in this.savedImageDataCount...this.everVisibleItemMaxIndex {
+                        for i in this.savedImageDataCount...capturedEverVisibleItemMaxIndex {
                             let uiImage = this.downloadedImages[i]!
                             let data = UIImagePNGRepresentation(uiImage)!
                             let photo = Photo(data: data, pin: this.pin, context: mainContext)
                             this.pinPhotos.append(photo)
                         }
-                        print("downloadedImagesOfAlbum[\(this.savedImageDataCount)...\(this.everVisibleItemMaxIndex)] is Being Saved ...")
-                        this.savedImageDataCount = this.everVisibleItemMaxIndex + 1
+                        this.savedImageDataCount = capturedEverVisibleItemMaxIndex + 1
                         this.imageDataEverSaved = true
                         
                         if this.downloadedImageCount == this.imageUrlsOfAlbum.count {
