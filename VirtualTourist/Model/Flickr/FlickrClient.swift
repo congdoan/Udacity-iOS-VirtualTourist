@@ -129,12 +129,6 @@ class  FlickrClient {
             let actualNumberOfReturnedImages = min(Int(total)!, maxNumberOfResultsPerSearch)
             let actualNumberOfPages = (actualNumberOfReturnedImages / pageSize) + (actualNumberOfReturnedImages % pageSize != 0 ? 1 : 0)
 
-            /*
-            let imageUrls = photoArray.map {(photoDictionary) in
-                //Unexpectedly found nil while unwrapping an Optional value
-                photoDictionary[Constants.FlickrResponseKeys.MediumURL] as! String
-            }
-            */
             let imageUrls = photoArray.filter {
                 if let _ = $0[Constants.FlickrResponseKeys.MediumURL] as? String {
                     return true

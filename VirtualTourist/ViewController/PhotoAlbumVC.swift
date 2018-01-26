@@ -74,7 +74,7 @@ class PhotoAlbumVC: UIViewController {
     private func updateUIViewsUponNewImageUrls() {
         let fetchedImageUrlsOfPage = pageDownloadResult.imageUrls!
         if fetchedImageUrlsOfPage.count > 0 {
-            let from = (self.albumNumberInPage - 1) * self.albumSize, to = min(from + self.albumSize, fetchedImageUrlsOfPage.count)
+            let from = (albumNumberInPage - 1) * albumSize, to = min(from + albumSize, fetchedImageUrlsOfPage.count)
             imageUrlsOfAlbum = Array(fetchedImageUrlsOfPage[from..<to])
             downloadedImageCount = 0
             savedImageDataCount = 0
@@ -121,7 +121,7 @@ class PhotoAlbumVC: UIViewController {
         } else {
             collectionViewSpinner.stopAnimating()
         }
-        self.button.isEnabled = !downloading
+        button.isEnabled = !downloading
     }
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
@@ -196,7 +196,6 @@ class PhotoAlbumVC: UIViewController {
             var unselectedImageUrls = [String]()
             var unselectedImages = [UIImage?]()
             
-            // Way 1:
             for i in 0..<selectedItems.count {
                 if selectedItems[i] {
                     downloadedImageCount -= 1
@@ -209,37 +208,6 @@ class PhotoAlbumVC: UIViewController {
             savedImageDataCount = 0
             everVisibleItemMaxIndex = 0
             imageDataEverSaved = false
-            /* Way 2:
-            var deletingPinPhotos = [Photo](), remainingPinPhotos = [Photo](), lastDeleteIndex = -1
-            for i in 0..<selectedItems.count {
-                if selectedItems[i] {
-                    downloadedImageDataCount -= 1
-                    if i < savedImageDataCount {
-                        savedImageDataCount -= 1
-                        deletingPinPhotos.append(pinPhotos[i])
-                        for j in lastDeleteIndex+1..<i {
-                            remainingPinPhotos.append(pinPhotos[j])
-                        }
-                        lastDeleteIndex = i
-                    }
-                } else {
-                    unselectedImageUrls.append(imageUrlsOfAlbum[i])
-                    unselectedImages.append(downloadedImagesOfAlbum[i])
-                }
-            }
-            if lastDeleteIndex > -1 {
-                for j in lastDeleteIndex+1..<pinPhotos.count {
-                    remainingPinPhotos.append(pinPhotos[j])
-                }
-                coreDataStack.performOperation { (mainContext) in
-                    for photo in deletingPinPhotos {
-                        mainContext.delete(photo)
-                    }
-                }
-                pinPhotos = remainingPinPhotos
-            }
-            everVisibleItemMaxIndex = 0
-            */
 
             imageUrlsOfAlbum = unselectedImageUrls
             downloadedImages = unselectedImages
@@ -382,7 +350,7 @@ extension PhotoAlbumVC: UICollectionViewDataSource {
         cell.layer.cornerRadius = 10
         
         let urlString = imageUrlsOfAlbum[indexPath.item]
-        self.downloadImage(imagePath: urlString) { [weak self] data, error in
+        downloadImage(imagePath: urlString) { [weak self] data, error in
             DispatchQueue.main.async {
                 guard let this = self, let data = data else { return }
                 guard indexPath.item < this.imageUrlsOfAlbum.count,
